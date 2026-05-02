@@ -1,26 +1,20 @@
-import {lazy, Suspense} from 'react'
-import {ErrorBoundary, type FallbackProps} from 'react-error-boundary'
-import {Route, Routes} from 'react-router'
-import {LoadingOrError} from '@/components/LoadingOrError'
-import {Gallery} from '@/pages/Gallery'
-
-const Details = lazy(async () =>
-	import('@/pages/Details').then(m => ({default: m.Details}))
-)
-
-function renderError({error}: FallbackProps) {
-	return <LoadingOrError error={error} />
-}
+import {Navigate, Route, Routes} from 'react-router'
+import {Cart} from '@/pages/Cart'
+import {Catalog} from '@/pages/Catalog'
+import {Checkout} from '@/pages/Checkout'
+import {OrderConfirmation} from '@/pages/OrderConfirmation'
+import {ProductDetails} from '@/pages/ProductDetails'
 
 export function App() {
 	return (
-		<ErrorBoundary fallbackRender={renderError}>
-			<Suspense fallback={<LoadingOrError />}>
-				<Routes>
-					<Route element={<Gallery />} index={true} />
-					<Route element={<Details />} path=':fruitName' />
-				</Routes>
-			</Suspense>
-		</ErrorBoundary>
+		<Routes>
+			<Route element={<Navigate replace={true} to='/catalog' />} index={true} />
+			<Route element={<Catalog />} path='catalog' />
+			<Route element={<ProductDetails />} path='products/:productSlug' />
+			<Route element={<Cart />} path='cart' />
+			<Route element={<Checkout />} path='checkout' />
+			<Route element={<OrderConfirmation />} path='order-confirmation' />
+			<Route element={<Navigate replace={true} to='/catalog' />} path='*' />
+		</Routes>
 	)
 }

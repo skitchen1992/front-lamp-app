@@ -17,7 +17,7 @@ export default defineConfig(() => ({
 		clearMocks: true,
 		coverage: {
 			enabled: true,
-			exclude: ['src/main.tsx', 'src/mocks/browser.ts'],
+			exclude: ['src/main.tsx', 'src/**/*.css', 'src/**/*.d.ts'],
 			include: ['src/**/*'],
 			reporter: ['text', 'lcov'],
 			reportsDirectory: 'coverage',

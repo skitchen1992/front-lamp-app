@@ -1,16 +1,12 @@
 import {configureStore} from '@reduxjs/toolkit'
-import {fruitsApi} from '@/api/fruits'
-import {fruitPreferencesReducer} from './fruitPreferencesSlice'
+import {cartReducer} from './cartSlice'
 
 const reducer = {
-	fruitPreferences: fruitPreferencesReducer,
-	[fruitsApi.reducerPath]: fruitsApi.reducer
+	cart: cartReducer
 }
 
 export function createAppStore() {
 	return configureStore({
-		middleware: getDefaultMiddleware =>
-			getDefaultMiddleware().concat(fruitsApi.middleware),
 		reducer
 	})
 }
