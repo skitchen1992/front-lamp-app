@@ -1,3 +1,4 @@
+import {createApi, fakeBaseQuery} from '@reduxjs/toolkit/query/react'
 import * as v from 'valibot'
 
 const Fruit = v.object({
@@ -15,4 +16,40 @@ export async function getFruits() {
 		throw new Error('Failed to fetch')
 	}
 	return v.parse(Fruits, await response.json())
+}
+
+interface FruitApiError {
+	message: string
+}
+
+export const fruitsApi = createApi({
+	baseQuery: fakeBaseQuery<FruitApiError>(),
+	endpoints: builder => ({
+		getFruits: builder.query<Fruit[], void>({
+			queryFn: async () => {
+				try {
+					return {data: await getFruits()}
+				} catch (error) {
+					return {
+						error: {
+							message: (error as Error).message
+						}
+					}
+				}
+			}
+		})
+	}),
+	reducerPath: 'fruitsApi'
+})
+
+export const {useGetFruitsQuery} = fruitsApi
+
+export function useFruits() {
+	const {data, error} = useGetFruitsQuery()
+
+	if (error) {
+		throw new Error(error.message)
+	}
+
+	return data
 }

@@ -1,7 +1,7 @@
 import {HttpResponse, http} from 'msw'
 import {App} from './App'
 import {server} from './mocks/server'
-import {queryClient, render, screen} from './test-utils'
+import {render, screen} from './test-utils'
 
 const widths = [360, 1280]
 
@@ -37,7 +37,6 @@ it('redirects home page when trying to access an invalid fruit', async () => {
 })
 
 it('renders error', async () => {
-	queryClient.clear()
 	server.use(http.get('/fruits', () => new HttpResponse(null, {status: 500})))
 	render(<App />)
 

@@ -1,10 +1,10 @@
-import {useSuspenseQuery} from '@tanstack/react-query'
 import {Star} from 'lucide-react'
 import {useCallback} from 'react'
 import {Link, Navigate, useParams} from 'react-router'
-import {getFruits} from '@/api/fruits'
+import {useFruits} from '@/api/fruits'
 import {Head} from '@/components/Head'
 import {ImageAttribution} from '@/components/ImageAttribution'
+import {LoadingOrError} from '@/components/LoadingOrError'
 import {
 	selectIsFavoriteFruit,
 	toggleFavoriteFruit
@@ -50,17 +50,17 @@ export function Details() {
 	const isTabletAndUp = useMediaQuery('(min-width: 600px)')
 	const {fruitName} = useParams()
 
-	const {data} = useSuspenseQuery({
-		queryFn: getFruits,
-		queryKey: ['fruits']
-	})
-
+	const data = useFruits()
 	const fruit = data?.find(
 		f => f.name.toLowerCase() === fruitName?.toLowerCase()
 	)
 	const isFavorite = useAppSelector(state =>
 		fruit ? selectIsFavoriteFruit(state, fruit.name) : false
 	)
+
+	if (!data) {
+		return <LoadingOrError />
+	}
 
 	if (!fruit) {
 		return <Navigate replace={true} to='/' />

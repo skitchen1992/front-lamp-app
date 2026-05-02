@@ -1,13 +1,14 @@
-import {useSuspenseQuery} from '@tanstack/react-query'
-import {getFruits} from '@/api/fruits'
+import {useFruits} from '@/api/fruits'
 import {Fruit} from '@/components/Fruit'
 import {Head} from '@/components/Head'
+import {LoadingOrError} from '@/components/LoadingOrError'
 
 export function Gallery() {
-	const {data} = useSuspenseQuery({
-		queryFn: getFruits,
-		queryKey: ['fruits']
-	})
+	const data = useFruits()
+
+	if (!data) {
+		return <LoadingOrError />
+	}
 
 	return (
 		<>
