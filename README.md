@@ -1,9 +1,3 @@
-# Vitamin 2.0
-
-![Test workflow](https://github.com/wtchnm/Vitamin/actions/workflows/test.yml/badge.svg) [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/wtchnm/Vitamin/blob/main/LICENSE)
-
-Opinionated Vite starter template. Previous version available on v1 branch.
-
 ## Features
 
 - [Vite 6](https://vitejs.dev) with [React 19](https://reactjs.org), [TypeScript 5](https://www.typescriptlang.org) and [absolute imports](https://github.com/aleclarson/vite-tsconfig-paths).
@@ -13,14 +7,6 @@ Opinionated Vite starter template. Previous version available on v1 branch.
 - Write e2e tests with [Playwright 1.52](https://www.cypress.io).
 
 ## Getting started
-
-Use this repository as a [GitHub template](https://github.com/wtchnm/Vitamin/generate) or use [degit](https://github.com/Rich-Harris/degit) to clone to your machine with an empty git history:
-
-```
-npx degit wtchnm/Vitamin#main my-app
-```
-
-Then, install the dependencies:
 
 ```
 pnpm install
