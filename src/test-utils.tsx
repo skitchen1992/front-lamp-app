@@ -2,7 +2,9 @@ import {QueryClient, QueryClientProvider} from '@tanstack/react-query'
 import {type RenderOptions, render as rtlRender} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type {PropsWithChildren, ReactElement} from 'react'
+import {Provider} from 'react-redux'
 import {BrowserRouter} from 'react-router'
+import {type AppStore, createAppStore} from '@/store'
 
 export const queryClient = new QueryClient({
 	defaultOptions: {
@@ -10,21 +12,29 @@ export const queryClient = new QueryClient({
 	}
 })
 
+interface ExtendedRenderOptions extends Omit<RenderOptions, 'wrapper'> {
+	route?: string
+	store?: AppStore
+}
+
 export function render(
 	ui: ReactElement,
-	{route, ...options}: Omit<RenderOptions, 'wrapper'> & {route?: string} = {
+	{route = '/', store = createAppStore(), ...options}: ExtendedRenderOptions = {
 		reactStrictMode: true
 	}
 ) {
 	globalThis.history.pushState({}, '', route)
 
 	return {
+		store,
 		user: userEvent.setup(),
 		...rtlRender(ui, {
 			wrapper: ({children}: PropsWithChildren) => (
-				<QueryClientProvider client={queryClient}>
-					<BrowserRouter>{children}</BrowserRouter>
-				</QueryClientProvider>
+				<Provider store={store}>
+					<QueryClientProvider client={queryClient}>
+						<BrowserRouter>{children}</BrowserRouter>
+					</QueryClientProvider>
+				</Provider>
 			),
 			...options
 		})

@@ -1,12 +1,50 @@
 import {useSuspenseQuery} from '@tanstack/react-query'
+import {Star} from 'lucide-react'
+import {useCallback} from 'react'
 import {Link, Navigate, useParams} from 'react-router'
 import {getFruits} from '@/api/fruits'
 import {Head} from '@/components/Head'
 import {ImageAttribution} from '@/components/ImageAttribution'
+import {
+	selectIsFavoriteFruit,
+	toggleFavoriteFruit
+} from '@/store/fruitPreferencesSlice'
+import {useAppDispatch, useAppSelector} from '@/store/hooks'
 import {useMediaQuery} from '@/utils/useMediaQuery'
 
 const DESKTOP_IMAGE_WIDTH_PERCENTAGE = 0.4
 const MOBILE_IMAGE_HEIGHT_PERCENTAGE = 0.3
+
+interface FavoriteFruitButtonProperties {
+	fruitName: string
+	isFavorite: boolean
+}
+
+function FavoriteFruitButton({
+	fruitName,
+	isFavorite
+}: FavoriteFruitButtonProperties) {
+	const dispatch = useAppDispatch()
+	const handleToggleFavorite = useCallback(() => {
+		dispatch(toggleFavoriteFruit(fruitName))
+	}, [dispatch, fruitName])
+
+	return (
+		<button
+			aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+			aria-pressed={isFavorite}
+			className='inline-flex size-12 items-center justify-center rounded-md border border-gray-300 text-gray-700 transition hover:bg-gray-100 focus:outline-3 focus:outline-gray-500 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800'
+			onClick={handleToggleFavorite}
+			type='button'
+		>
+			<Star
+				aria-hidden={true}
+				className={isFavorite ? 'fill-yellow-400 text-yellow-500' : undefined}
+				size={24}
+			/>
+		</button>
+	)
+}
 
 export function Details() {
 	const isTabletAndUp = useMediaQuery('(min-width: 600px)')
@@ -20,6 +58,10 @@ export function Details() {
 	const fruit = data?.find(
 		f => f.name.toLowerCase() === fruitName?.toLowerCase()
 	)
+	const isFavorite = useAppSelector(state =>
+		fruit ? selectIsFavoriteFruit(state, fruit.name) : false
+	)
+
 	if (!fruit) {
 		return <Navigate replace={true} to='/' />
 	}
@@ -53,7 +95,13 @@ export function Details() {
 						<span className='ml-4 text-xl'>Back</span>
 					</Link>
 
-					<h1 className='mt-2 font-bold text-6xl sm:mt-8'>{fruit.name}</h1>
+					<div className='mt-2 flex flex-wrap items-center gap-3 sm:mt-8'>
+						<h1 className='font-bold text-6xl'>{fruit.name}</h1>
+						<FavoriteFruitButton
+							fruitName={fruit.name}
+							isFavorite={isFavorite}
+						/>
+					</div>
 					<h2 className='mt-3 text-gray-500 text-xl dark:text-gray-400'>
 						Vitamins per 100 g (3.5 oz)
 					</h2>

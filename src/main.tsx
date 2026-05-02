@@ -3,8 +3,10 @@ import {QueryClient, QueryClientProvider} from '@tanstack/react-query'
 import {ReactQueryDevtools} from '@tanstack/react-query-devtools'
 import {StrictMode} from 'react'
 import {createRoot} from 'react-dom/client'
+import {Provider} from 'react-redux'
 import {BrowserRouter} from 'react-router'
 import {App} from './App'
+import {store} from './store'
 
 const queryClient = new QueryClient()
 
@@ -24,12 +26,14 @@ enableMocking()
 			const root = createRoot(container)
 			root.render(
 				<StrictMode>
-					<QueryClientProvider client={queryClient}>
-						<ReactQueryDevtools initialIsOpen={false} />
-						<BrowserRouter>
-							<App />
-						</BrowserRouter>
-					</QueryClientProvider>
+					<Provider store={store}>
+						<QueryClientProvider client={queryClient}>
+							<ReactQueryDevtools initialIsOpen={false} />
+							<BrowserRouter>
+								<App />
+							</BrowserRouter>
+						</QueryClientProvider>
+					</Provider>
 				</StrictMode>
 			)
 		}

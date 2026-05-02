@@ -17,6 +17,17 @@ it.each(
 	await user.click(button)
 
 	await expect(screen.findByText('Vitamin K')).resolves.toBeInTheDocument()
+
+	const favoriteButton = await screen.findByRole('button', {
+		name: 'Add to favorites'
+	})
+	expect(favoriteButton).toHaveAttribute('aria-pressed', 'false')
+
+	await user.click(favoriteButton)
+
+	expect(
+		screen.getByRole('button', {name: 'Remove from favorites'})
+	).toHaveAttribute('aria-pressed', 'true')
 })
 
 it('redirects home page when trying to access an invalid fruit', async () => {
