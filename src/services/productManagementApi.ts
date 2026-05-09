@@ -11,6 +11,10 @@ interface ListProductsParameters {
 	page: number
 	/** Поиск по названию и артикулу (query string product-management API). */
 	query?: string
+	/** Минимальная цена в валюте товара (в запросе как `min_price`). */
+	minPrice?: number
+	/** Максимальная цена в валюте товара (в запросе как `max_price`). */
+	maxPrice?: number
 	status: ProductLifecycleStatus
 }
 
@@ -33,10 +37,26 @@ export const productManagementApi = createApi({
 			query: () => '/api/v1/categories'
 		}),
 		listProducts: builder.query<ProductListResponse, ListProductsParameters>({
-			query: parameters => ({
-				params: parameters,
-				url: '/api/v1/products'
-			})
+			query: ({
+				limit,
+				page,
+				status,
+				query: searchQuery,
+				minPrice,
+				maxPrice
+			}) => {
+				const params: Record<string, string | number> = {limit, page, status}
+				if (searchQuery !== undefined) {
+					params['query'] = searchQuery
+				}
+				if (minPrice !== undefined) {
+					params['minPrice'] = minPrice
+				}
+				if (maxPrice !== undefined) {
+					params['maxPrice'] = maxPrice
+				}
+				return {params, url: '/api/v1/products'}
+			}
 		})
 	}),
 	reducerPath: 'productManagementApi'

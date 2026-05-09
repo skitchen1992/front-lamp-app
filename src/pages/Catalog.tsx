@@ -4,8 +4,7 @@ import {
 	useCallback,
 	useEffect,
 	useId,
-	useMemo,
-	useState
+	useMemo
 } from 'react'
 import {Link} from 'react-router'
 import {Head} from '@/components/Head'
@@ -20,11 +19,29 @@ import {
 	toProduct,
 	toProductCategories
 } from '@/data/products'
+import {parsePriceFilter} from '@/lib/format'
 import {cn} from '@/lib/utils'
 import {
 	useListCategoriesQuery,
 	useListProductsQuery
 } from '@/services/productManagementApi'
+import {useAppDispatch, useAppSelector} from '@/store/hooks'
+import {
+	selectCatalogCategory,
+	selectCatalogDebouncedMaxPrice,
+	selectCatalogDebouncedMinPrice,
+	selectCatalogDebouncedQuery,
+	selectCatalogMaxPriceInput,
+	selectCatalogMinPriceInput,
+	selectCatalogQuery,
+	setCatalogCategory,
+	setCatalogDebouncedMaxPrice,
+	setCatalogDebouncedMinPrice,
+	setCatalogDebouncedQuery,
+	setCatalogMaxPriceInput,
+	setCatalogMinPriceInput,
+	setCatalogQuery
+} from '@/store/catalogSlice'
 
 const SEARCH_DEBOUNCE_MS = 300
 const emptyCategories: CategoryResponse[] = []
@@ -113,39 +130,75 @@ function CatalogResults({
 // biome-ignore lint/complexity/noExcessiveLinesPerFunction: Catalog keeps the main merchandising layout in one place.
 export function Catalog() {
 	const searchId = useId()
+	const dispatch = useAppDispatch()
+
+	const category = useAppSelector(selectCatalogCategory)
+	const query = useAppSelector(selectCatalogQuery)
+	const debouncedQuery = useAppSelector(selectCatalogDebouncedQuery)
+	const minPriceInput = useAppSelector(selectCatalogMinPriceInput)
+	const maxPriceInput = useAppSelector(selectCatalogMaxPriceInput)
+	const debouncedMinPrice = useAppSelector(selectCatalogDebouncedMinPrice)
+	const debouncedMaxPrice = useAppSelector(selectCatalogDebouncedMaxPrice)
 
 	const categoriesQuery = useListCategoriesQuery()
-	const [category, setCategory] = useState('all')
-	const [query, setQuery] = useState('')
-	const [debouncedQuery, setDebouncedQuery] = useState('')
 
 	useEffect(() => {
 		const handle = globalThis.setTimeout(() => {
-			setDebouncedQuery(query.trim())
+			dispatch(setCatalogDebouncedQuery(query.trim()))
 		}, SEARCH_DEBOUNCE_MS)
 
 		return () => {
 			globalThis.clearTimeout(handle)
 		}
-	}, [query])
+	}, [dispatch, query])
+
+	useEffect(() => {
+		const handle = globalThis.setTimeout(() => {
+			dispatch(setCatalogDebouncedMinPrice(parsePriceFilter(minPriceInput)))
+			dispatch(setCatalogDebouncedMaxPrice(parsePriceFilter(maxPriceInput)))
+		}, SEARCH_DEBOUNCE_MS)
+
+		return () => {
+			globalThis.clearTimeout(handle)
+		}
+	}, [dispatch, maxPriceInput, minPriceInput])
 
 	const searchArg = debouncedQuery.length > 0 ? debouncedQuery : undefined
 	const productsQuery = useListProductsQuery({
 		limit: 100,
 		page: 1,
 		status: 'active',
-		...(searchArg !== undefined ? {query: searchArg} : {})
+		...(searchArg === undefined ? {} : {query: searchArg}),
+		...(debouncedMinPrice === undefined ? {} : {minPrice: debouncedMinPrice}),
+		...(debouncedMaxPrice === undefined ? {} : {maxPrice: debouncedMaxPrice})
 	})
 
-	const handleCategorySelect = useCallback((value: string) => {
-		setCategory(value)
-	}, [])
+	const handleCategorySelect = useCallback(
+		(value: string) => {
+			dispatch(setCatalogCategory(value))
+		},
+		[dispatch]
+	)
 
 	const handleQueryChange = useCallback(
 		(event: ChangeEvent<HTMLInputElement>) => {
-			setQuery(event.target.value)
+			dispatch(setCatalogQuery(event.target.value))
 		},
-		[]
+		[dispatch]
+	)
+
+	const handleMinPriceChange = useCallback(
+		(event: ChangeEvent<HTMLInputElement>) => {
+			dispatch(setCatalogMinPriceInput(event.target.value))
+		},
+		[dispatch]
+	)
+
+	const handleMaxPriceChange = useCallback(
+		(event: ChangeEvent<HTMLInputElement>) => {
+			dispatch(setCatalogMaxPriceInput(event.target.value))
+		},
+		[dispatch]
 	)
 
 	const categoryData = categoriesQuery.data ?? emptyCategories
@@ -240,20 +293,25 @@ export function Catalog() {
 								<Input
 									aria-label='Цена от'
 									className='h-9 rounded-md bg-background px-3 text-sm'
-									placeholder='от 10'
-									readOnly={true}
+									inputMode='decimal'
+									onChange={handleMinPriceChange}
+									placeholder='от'
+									value={minPriceInput}
 								/>
 								<span className='text-muted-foreground'>—</span>
 								<Input
 									aria-label='Цена до'
 									className='h-9 rounded-md bg-background px-3 text-sm'
-									placeholder='до 500'
-									readOnly={true}
+									inputMode='decimal'
+									onChange={handleMaxPriceChange}
+									placeholder='до'
+									value={maxPriceInput}
 								/>
 							</div>
 						</div>
 					</aside>
 
+					{/* biome-ignore lint/correctness/useUniqueElementIds: Стабильные id для якорей из шапки и CTA. */}
 					<section id='products'>
 						<div className='mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
 							<h2 className='font-bold text-xl'>
@@ -280,6 +338,7 @@ export function Catalog() {
 					</section>
 				</div>
 
+				{/* biome-ignore lint/correctness/useUniqueElementIds: Стабильные id для якорей из шапки. */}
 				<section className='border-t bg-background' id='about'>
 					<div className='mx-auto grid max-w-7xl gap-4 px-4 py-8 sm:px-6 md:grid-cols-3 lg:px-8'>
 						<div className='rounded-md border p-5'>
@@ -289,6 +348,7 @@ export function Catalog() {
 								Собственное производство и входной контроль каждой партии.
 							</p>
 						</div>
+						{/* biome-ignore lint/correctness/useUniqueElementIds: Стабильные id для якорей из шапки. */}
 						<div className='rounded-md border p-5' id='delivery'>
 							<Truck aria-hidden={true} className='size-5 text-primary' />
 							<h2 className='mt-3 font-semibold'>Доставка</h2>
@@ -296,6 +356,7 @@ export function Catalog() {
 								Самовывоз со склада или отгрузка транспортной компанией.
 							</p>
 						</div>
+						{/* biome-ignore lint/correctness/useUniqueElementIds: Стабильные id для якорей из шапки. */}
 						<div className='rounded-md border p-5' id='contacts'>
 							<Phone aria-hidden={true} className='size-5 text-primary' />
 							<h2 className='mt-3 font-semibold'>Контакты</h2>

@@ -28,7 +28,7 @@ export function OrderSummary({
 	const cartItems = useAppSelector(selectCartItems)
 	const quantity = useAppSelector(selectCartQuantity)
 	const subtotal = useAppSelector(selectCartSubtotal)
-	
+
 	const cartCalculationRequest = useMemo(
 		() =>
 			cartItems.length === 0

@@ -32,15 +32,30 @@ export const productManagementHandlers = [
 		HttpResponse.json(categoryResponses)
 	),
 	http.get(`${productApiUrl}/products`, ({request}) => {
-		const search = new URL(request.url).searchParams.get('query')?.trim()
+		const url = new URL(request.url)
+		const search = url.searchParams.get('query')?.trim()
 		const normalized = search?.toLowerCase() ?? ''
-		const items = normalized
+		let items = normalized
 			? productListResponse.items.filter(
 					product =>
 						product.name.toLowerCase().includes(normalized) ||
 						product.sku.toLowerCase().includes(normalized)
 				)
-			: productListResponse.items
+			: [...productListResponse.items]
+
+		const minRaw = url.searchParams.get('min_price')
+		const maxRaw = url.searchParams.get('max_price')
+		const minPrice =
+			minRaw !== null && minRaw !== '' ? Number(minRaw) : undefined
+		const maxPrice =
+			maxRaw !== null && maxRaw !== '' ? Number(maxRaw) : undefined
+
+		if (minPrice !== undefined && Number.isFinite(minPrice)) {
+			items = items.filter(product => Number(product.price) >= minPrice)
+		}
+		if (maxPrice !== undefined && Number.isFinite(maxPrice)) {
+			items = items.filter(product => Number(product.price) <= maxPrice)
+		}
 
 		return HttpResponse.json({
 			...productListResponse,

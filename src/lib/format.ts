@@ -13,3 +13,17 @@ export function formatCartLineCount(count: number) {
 
 	return `${count} товаров`
 }
+
+/** Парсинг числа цены из поля фильтра (пустое и некорректное → без параметра запроса). */
+export function parsePriceFilter(raw: string): number | undefined {
+	const trimmed = raw.trim()
+	if (trimmed === '') {
+		return
+	}
+	const normalized = trimmed.replace(',', '.')
+	const value = Number(normalized)
+	if (!Number.isFinite(value) || value < 0) {
+		return
+	}
+	return value
+}
