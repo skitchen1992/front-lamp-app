@@ -57,7 +57,6 @@ function ProductThumbnail({
 	)
 }
 
-// biome-ignore lint/complexity/noExcessiveLinesPerFunction: Product page keeps the purchase block and specs together for readability.
 export function ProductDetails() {
 	const dispatch = useAppDispatch()
 	const {productSlug} = useParams()

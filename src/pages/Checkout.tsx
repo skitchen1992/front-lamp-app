@@ -5,13 +5,14 @@ import {CheckoutHeader} from '@/components/CheckoutHeader'
 import {Head} from '@/components/Head'
 import {OrderSummary} from '@/components/OrderSummary'
 import {Button} from '@/components/ui/Button'
+import {Input} from '@/components/ui/input'
 import {formatPrice} from '@/lib/format'
 import {
 	type DeliveryType,
 	useCreateOrderMutation
 } from '@/services/orderManagementApi'
 import {useAppSelector} from '@/store/hooks'
-import {selectCartPageData} from './selectors'
+import {selectCartPageData} from '@/store/cartSlice'
 
 export function Checkout() {
 	const navigate = useNavigate()
@@ -50,7 +51,7 @@ export function Checkout() {
 				// RTK Query keeps the mutation error in state for the inline alert.
 			}
 		},
-		[createOrder, deliveryType, items, navigate]
+		[createOrder, deliveryType, items]
 	)
 
 	if (lineCount === 0) {
@@ -73,8 +74,8 @@ export function Checkout() {
 						<div className='grid gap-5 rounded-md border bg-background p-6 sm:grid-cols-2'>
 							<label className='grid gap-2 text-sm'>
 								<span className='font-medium'>ФИО / Контактное лицо *</span>
-								<input
-									className='h-10 rounded-md border bg-background px-3 outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50'
+								<Input
+									className='h-10 bg-background'
 									defaultValue='Иванов Иван Иванович'
 									name='customerName'
 									required={true}
@@ -82,8 +83,8 @@ export function Checkout() {
 							</label>
 							<label className='grid gap-2 text-sm'>
 								<span className='font-medium'>Телефон *</span>
-								<input
-									className='h-10 rounded-md border bg-background px-3 outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50'
+								<Input
+									className='h-10 bg-background'
 									defaultValue='+7 (999) 123-45-67'
 									name='phone'
 									required={true}
@@ -91,8 +92,8 @@ export function Checkout() {
 							</label>
 							<label className='grid gap-2 text-sm'>
 								<span className='font-medium'>E-mail *</span>
-								<input
-									className='h-10 rounded-md border bg-background px-3 outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50'
+								<Input
+									className='h-10 bg-background'
 									defaultValue='ivan@example.com'
 									name='email'
 									required={true}
@@ -101,8 +102,8 @@ export function Checkout() {
 							</label>
 							<label className='grid gap-2 text-sm'>
 								<span className='font-medium'>Организация (необязательно)</span>
-								<input
-									className='h-10 rounded-md border bg-background px-3 outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50'
+								<Input
+									className='h-10 bg-background'
 									defaultValue='ООО «Свет-Электро»'
 									name='companyName'
 								/>
@@ -127,8 +128,8 @@ export function Checkout() {
 										aria-hidden={true}
 										className='absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground'
 									/>
-									<input
-										className='h-10 w-full rounded-md border bg-background px-9 outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50'
+									<Input
+										className='h-10 bg-background pl-9'
 										defaultValue='г. Москва, ул. Ленина, 42'
 										name='deliveryAddress'
 									/>

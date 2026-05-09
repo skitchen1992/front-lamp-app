@@ -21,7 +21,7 @@ export function OrderConfirmation() {
 		if (order) {
 			dispatch(clearCart())
 		}
-	}, [dispatch, order])
+	}, [ order])
 
 	if (!order) {
 		return <Navigate replace={true} to='/catalog' />

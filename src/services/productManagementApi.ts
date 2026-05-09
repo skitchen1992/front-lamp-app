@@ -9,11 +9,8 @@ import type {
 interface ListProductsParameters {
 	limit: number
 	page: number
-	/** Поиск по названию и артикулу (query string product-management API). */
 	query?: string
-	/** Минимальная цена в валюте товара (в запросе как `min_price`). */
 	minPrice?: number
-	/** Максимальная цена в валюте товара (в запросе как `max_price`). */
 	maxPrice?: number
 	status: ProductLifecycleStatus
 }

@@ -1,4 +1,4 @@
-import {createSlice, type PayloadAction} from '@reduxjs/toolkit'
+import {createSelector, createSlice, type PayloadAction} from '@reduxjs/toolkit'
 import type {RootState} from '@/store'
 
 interface CatalogFiltersState {
@@ -94,3 +94,16 @@ export function selectCatalogMinPriceInput(state: RootState) {
 export function selectCatalogQuery(state: RootState) {
 	return state.catalog.query
 }
+
+export const selectCatalogFilters = createSelector(
+	[(state: RootState) => state.catalog],
+	catalog => ({
+		category: catalog.category,
+		debouncedMaxPrice: catalog.debouncedMaxPrice,
+		debouncedMinPrice: catalog.debouncedMinPrice,
+		debouncedQuery: catalog.debouncedQuery,
+		maxPriceInput: catalog.maxPriceInput,
+		minPriceInput: catalog.minPriceInput,
+		query: catalog.query
+	})
+)

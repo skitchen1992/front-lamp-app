@@ -12,10 +12,10 @@ import {
 	clearCart,
 	decrementCartItem,
 	incrementCartItem,
-	removeCartItem
+	removeCartItem,
+	selectCartPageData
 } from '@/store/cartSlice'
 import {useAppDispatch, useAppSelector} from '@/store/hooks'
-import {selectCartPageData} from './selectors'
 
 interface CartLineItemProperties {
 	product: Product

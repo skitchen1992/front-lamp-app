@@ -122,3 +122,8 @@ export function selectCartSubtotal(state: RootState) {
 export const selectCartViewItems = createSelector([selectCartItems], items =>
 	items.map(item => ({...item, product: item.product}))
 )
+
+export const selectCartPageData = createSelector(
+	[selectCartViewItems, selectCartLineCount],
+	(items, lineCount) => ({items, lineCount})
+)

@@ -27,13 +27,7 @@ import {
 } from '@/services/productManagementApi'
 import {useAppDispatch, useAppSelector} from '@/store/hooks'
 import {
-	selectCatalogCategory,
-	selectCatalogDebouncedMaxPrice,
-	selectCatalogDebouncedMinPrice,
-	selectCatalogDebouncedQuery,
-	selectCatalogMaxPriceInput,
-	selectCatalogMinPriceInput,
-	selectCatalogQuery,
+	selectCatalogFilters,
 	setCatalogCategory,
 	setCatalogDebouncedMaxPrice,
 	setCatalogDebouncedMinPrice,
@@ -127,18 +121,19 @@ function CatalogResults({
 	))
 }
 
-// biome-ignore lint/complexity/noExcessiveLinesPerFunction: Catalog keeps the main merchandising layout in one place.
 export function Catalog() {
 	const searchId = useId()
 	const dispatch = useAppDispatch()
 
-	const category = useAppSelector(selectCatalogCategory)
-	const query = useAppSelector(selectCatalogQuery)
-	const debouncedQuery = useAppSelector(selectCatalogDebouncedQuery)
-	const minPriceInput = useAppSelector(selectCatalogMinPriceInput)
-	const maxPriceInput = useAppSelector(selectCatalogMaxPriceInput)
-	const debouncedMinPrice = useAppSelector(selectCatalogDebouncedMinPrice)
-	const debouncedMaxPrice = useAppSelector(selectCatalogDebouncedMaxPrice)
+	const {
+		category,
+		debouncedMaxPrice,
+		debouncedMinPrice,
+		debouncedQuery,
+		maxPriceInput,
+		minPriceInput,
+		query
+	} = useAppSelector(selectCatalogFilters)
 
 	const categoriesQuery = useListCategoriesQuery()
 
@@ -150,7 +145,7 @@ export function Catalog() {
 		return () => {
 			globalThis.clearTimeout(handle)
 		}
-	}, [dispatch, query])
+	}, [ query])
 
 	useEffect(() => {
 		const handle = globalThis.setTimeout(() => {
@@ -161,7 +156,7 @@ export function Catalog() {
 		return () => {
 			globalThis.clearTimeout(handle)
 		}
-	}, [dispatch, maxPriceInput, minPriceInput])
+	}, [ maxPriceInput, minPriceInput])
 
 	const searchArg = debouncedQuery.length > 0 ? debouncedQuery : undefined
 	const productsQuery = useListProductsQuery({
@@ -177,31 +172,32 @@ export function Catalog() {
 		(value: string) => {
 			dispatch(setCatalogCategory(value))
 		},
-		[dispatch]
+		[]
 	)
 
 	const handleQueryChange = useCallback(
 		(event: ChangeEvent<HTMLInputElement>) => {
 			dispatch(setCatalogQuery(event.target.value))
 		},
-		[dispatch]
+		[]
 	)
 
 	const handleMinPriceChange = useCallback(
 		(event: ChangeEvent<HTMLInputElement>) => {
 			dispatch(setCatalogMinPriceInput(event.target.value))
 		},
-		[dispatch]
+		[]
 	)
 
 	const handleMaxPriceChange = useCallback(
 		(event: ChangeEvent<HTMLInputElement>) => {
 			dispatch(setCatalogMaxPriceInput(event.target.value))
 		},
-		[dispatch]
+		[]
 	)
 
 	const categoryData = categoriesQuery.data ?? emptyCategories
+
 	const categories = useMemo(
 		() => toProductCategories(categoryData),
 		[categoryData]
@@ -311,7 +307,6 @@ export function Catalog() {
 						</div>
 					</aside>
 
-					{/* biome-ignore lint/correctness/useUniqueElementIds: Стабильные id для якорей из шапки и CTA. */}
 					<section id='products'>
 						<div className='mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
 							<h2 className='font-bold text-xl'>
@@ -338,7 +333,6 @@ export function Catalog() {
 					</section>
 				</div>
 
-				{/* biome-ignore lint/correctness/useUniqueElementIds: Стабильные id для якорей из шапки. */}
 				<section className='border-t bg-background' id='about'>
 					<div className='mx-auto grid max-w-7xl gap-4 px-4 py-8 sm:px-6 md:grid-cols-3 lg:px-8'>
 						<div className='rounded-md border p-5'>
@@ -348,7 +342,6 @@ export function Catalog() {
 								Собственное производство и входной контроль каждой партии.
 							</p>
 						</div>
-						{/* biome-ignore lint/correctness/useUniqueElementIds: Стабильные id для якорей из шапки. */}
 						<div className='rounded-md border p-5' id='delivery'>
 							<Truck aria-hidden={true} className='size-5 text-primary' />
 							<h2 className='mt-3 font-semibold'>Доставка</h2>
@@ -356,7 +349,6 @@ export function Catalog() {
 								Самовывоз со склада или отгрузка транспортной компанией.
 							</p>
 						</div>
-						{/* biome-ignore lint/correctness/useUniqueElementIds: Стабильные id для якорей из шапки. */}
 						<div className='rounded-md border p-5' id='contacts'>
 							<Phone aria-hidden={true} className='size-5 text-primary' />
 							<h2 className='mt-3 font-semibold'>Контакты</h2>
