@@ -1,15 +1,28 @@
+import {skipToken} from '@reduxjs/toolkit/query'
 import {ChevronRight, ShoppingCart} from 'lucide-react'
-import {useCallback, useState} from 'react'
+import {useCallback, useMemo, useState} from 'react'
 import {Link, Navigate, useParams} from 'react-router'
 import {Head} from '@/components/Head'
 import {QuantityStepper} from '@/components/QuantityStepper'
 import {StoreHeader} from '@/components/StoreHeader'
 import {Badge} from '@/components/ui/Badge'
 import {Button} from '@/components/ui/Button'
-import {findProductBySlug, type ProductImage} from '@/data/products'
+import {
+	type CategoryResponse,
+	type Product,
+	type ProductImage,
+	toProduct
+} from '@/data/products'
 import {formatPrice} from '@/lib/format'
+import {
+	useGetProductQuery,
+	useListCategoriesQuery,
+	useListProductsQuery
+} from '@/services/productManagementApi'
 import {addToCart} from '@/store/cartSlice'
 import {useAppDispatch} from '@/store/hooks'
+
+const emptyCategories: CategoryResponse[] = []
 
 interface ProductThumbnailProperties {
 	image: ProductImage
@@ -48,9 +61,26 @@ function ProductThumbnail({
 export function ProductDetails() {
 	const dispatch = useAppDispatch()
 	const {productSlug} = useParams()
+	const categoriesQuery = useListCategoriesQuery()
+	const productsQuery = useListProductsQuery({
+		limit: 100,
+		page: 1,
+		status: 'active'
+	})
 
-	const product = findProductBySlug(productSlug)
-	const productId = product ? product.id : ''
+	const productSummary = useMemo(
+		() => productsQuery.data?.items.find(item => item.slug === productSlug),
+		[productSlug, productsQuery.data?.items]
+	)
+	const productDetailsQuery = useGetProductQuery(
+		productSummary?.id ?? skipToken
+	)
+	const categoryData = categoriesQuery.data ?? emptyCategories
+	const product = useMemo(() => {
+		const apiProduct = productDetailsQuery.data ?? productSummary
+
+		return apiProduct ? toProduct(apiProduct, categoryData) : undefined
+	}, [categoryData, productDetailsQuery.data, productSummary])
 
 	const [quantity, setQuantity] = useState(1)
 	const [selectedImageSrc, setSelectedImageSrc] = useState('')
@@ -68,8 +98,50 @@ export function ProductDetails() {
 	}, [])
 
 	const handleAddToCart = useCallback(() => {
-		dispatch(addToCart({productId, quantity}))
-	}, [productId, quantity])
+		dispatch(addToCart({product: product as Product, quantity}))
+	}, [dispatch, product, quantity])
+
+	const isProductLoading = categoriesQuery.isLoading || productsQuery.isLoading
+	const hasProductError = categoriesQuery.isError || productsQuery.isError
+
+	if (isProductLoading) {
+		return (
+			<>
+				<Head title='Загрузка товара — ЛампоЗавод' />
+				<StoreHeader />
+				<main className='min-h-screen bg-muted/40'>
+					<div className='mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8'>
+						<p
+							className='rounded-md border bg-background p-6 text-muted-foreground text-sm'
+							role='status'
+						>
+							Загружаем товар...
+						</p>
+					</div>
+				</main>
+			</>
+		)
+	}
+
+	if (hasProductError) {
+		return (
+			<>
+				<Head title='Ошибка товара — ЛампоЗавод' />
+				<StoreHeader />
+				<main className='min-h-screen bg-muted/40'>
+					<div className='mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8'>
+						<p
+							className='rounded-md border border-destructive/30 bg-background p-6 text-destructive text-sm'
+							role='alert'
+						>
+							Не удалось загрузить товар. Проверьте доступность
+							product-management-service.
+						</p>
+					</div>
+				</main>
+			</>
+		)
+	}
 
 	if (!product) {
 		return <Navigate replace={true} to='/catalog' />

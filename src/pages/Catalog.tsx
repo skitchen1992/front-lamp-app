@@ -1,15 +1,36 @@
 import {Factory, Mail, MapPin, Phone, Truck} from 'lucide-react'
-import {type ChangeEvent, useCallback, useId, useMemo, useState} from 'react'
+import {
+	type ChangeEvent,
+	useCallback,
+	useEffect,
+	useId,
+	useMemo,
+	useState
+} from 'react'
 import {Link} from 'react-router'
 import {Head} from '@/components/Head'
 import {ProductCard} from '@/components/ProductCard'
 import {StoreHeader} from '@/components/StoreHeader'
-import {productCategories, products} from '@/data/products'
+import {Input} from '@/components/ui/input'
+import {Label} from '@/components/ui/label'
+import {
+	type CategoryResponse,
+	type Product,
+	type ProductCategory,
+	toProduct,
+	toProductCategories
+} from '@/data/products'
 import {cn} from '@/lib/utils'
+import {
+	useListCategoriesQuery,
+	useListProductsQuery
+} from '@/services/productManagementApi'
 
+const SEARCH_DEBOUNCE_MS = 300
+const emptyCategories: CategoryResponse[] = []
 interface CategoryFilterButtonProperties {
 	active: boolean
-	item: (typeof productCategories)[number]
+	item: ProductCategory
 	onSelect: (value: string) => void
 }
 
@@ -42,11 +63,79 @@ function CategoryFilterButton({
 	)
 }
 
+interface CatalogResultsProperties {
+	hasError: boolean
+	isLoading: boolean
+	products: Product[]
+}
+
+function CatalogResults({
+	hasError,
+	isLoading,
+	products
+}: CatalogResultsProperties) {
+	if (isLoading) {
+		return (
+			<p
+				className='rounded-md border bg-background p-6 text-muted-foreground text-sm sm:col-span-2 xl:col-span-4'
+				role='status'
+			>
+				Загружаем каталог...
+			</p>
+		)
+	}
+
+	if (hasError) {
+		return (
+			<p
+				className='rounded-md border border-destructive/30 bg-background p-6 text-destructive text-sm sm:col-span-2 xl:col-span-4'
+				role='alert'
+			>
+				Не удалось загрузить товары. Проверьте доступность
+				product-management-service.
+			</p>
+		)
+	}
+
+	if (products.length === 0) {
+		return (
+			<p className='rounded-md border bg-background p-6 text-muted-foreground text-sm sm:col-span-2 xl:col-span-4'>
+				Товары не найдены.
+			</p>
+		)
+	}
+
+	return products.map(product => (
+		<ProductCard key={product.id} product={product} />
+	))
+}
+
+// biome-ignore lint/complexity/noExcessiveLinesPerFunction: Catalog keeps the main merchandising layout in one place.
 export function Catalog() {
 	const searchId = useId()
 
+	const categoriesQuery = useListCategoriesQuery()
 	const [category, setCategory] = useState('all')
 	const [query, setQuery] = useState('')
+	const [debouncedQuery, setDebouncedQuery] = useState('')
+
+	useEffect(() => {
+		const handle = globalThis.setTimeout(() => {
+			setDebouncedQuery(query.trim())
+		}, SEARCH_DEBOUNCE_MS)
+
+		return () => {
+			globalThis.clearTimeout(handle)
+		}
+	}, [query])
+
+	const searchArg = debouncedQuery.length > 0 ? debouncedQuery : undefined
+	const productsQuery = useListProductsQuery({
+		limit: 100,
+		page: 1,
+		status: 'active',
+		...(searchArg !== undefined ? {query: searchArg} : {})
+	})
 
 	const handleCategorySelect = useCallback((value: string) => {
 		setCategory(value)
@@ -59,21 +148,30 @@ export function Catalog() {
 		[]
 	)
 
+	const categoryData = categoriesQuery.data ?? emptyCategories
+	const categories = useMemo(
+		() => toProductCategories(categoryData),
+		[categoryData]
+	)
+	const products = useMemo(
+		() =>
+			(productsQuery.data?.items ?? []).map(product =>
+				toProduct(product, categoryData)
+			),
+		[categoryData, productsQuery.data?.items]
+	)
 	const visibleProducts = useMemo(
 		() =>
 			products.filter(product => {
 				const matchesCategory =
 					category === 'all' || product.category === category
-				const normalizedQuery = query.trim().toLowerCase()
-				const matchesQuery =
-					normalizedQuery.length === 0 ||
-					product.name.toLowerCase().includes(normalizedQuery) ||
-					product.sku.toLowerCase().includes(normalizedQuery)
 
-				return matchesCategory && matchesQuery
+				return matchesCategory
 			}),
-		[category, query]
+		[category, products]
 	)
+	const isCatalogLoading = categoriesQuery.isLoading || productsQuery.isLoading
+	const hasCatalogError = categoriesQuery.isError || productsQuery.isError
 
 	return (
 		<>
@@ -107,7 +205,7 @@ export function Catalog() {
 						<div className='mt-5'>
 							<p className='font-semibold text-sm'>Категория</p>
 							<div className='mt-3 space-y-1'>
-								{productCategories.map(item => (
+								{categories.map(item => (
 									<CategoryFilterButton
 										active={category === item.value}
 										item={item}
@@ -118,11 +216,11 @@ export function Catalog() {
 							</div>
 						</div>
 						<div className='mt-6 border-t pt-5'>
-							<label className='font-semibold text-sm' htmlFor={searchId}>
+							<Label className='font-semibold' htmlFor={searchId}>
 								Поиск
-							</label>
-							<input
-								className='mt-3 h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50'
+							</Label>
+							<Input
+								className='mt-3 h-10 bg-background px-3'
 								id={searchId}
 								onChange={handleQueryChange}
 								placeholder='Название или артикул'
@@ -139,16 +237,16 @@ export function Catalog() {
 						<div className='mt-6 border-t pt-5'>
 							<p className='font-semibold text-sm'>Цена, ₽</p>
 							<div className='mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2'>
-								<input
+								<Input
 									aria-label='Цена от'
-									className='h-9 w-full min-w-0 rounded-md border bg-background px-3 text-sm'
+									className='h-9 rounded-md bg-background px-3 text-sm'
 									placeholder='от 10'
 									readOnly={true}
 								/>
 								<span className='text-muted-foreground'>—</span>
-								<input
+								<Input
 									aria-label='Цена до'
-									className='h-9 w-full min-w-0 rounded-md border bg-background px-3 text-sm'
+									className='h-9 rounded-md bg-background px-3 text-sm'
 									placeholder='до 500'
 									readOnly={true}
 								/>
@@ -173,9 +271,11 @@ export function Catalog() {
 							</label>
 						</div>
 						<div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
-							{visibleProducts.map(product => (
-								<ProductCard key={product.id} product={product} />
-							))}
+							<CatalogResults
+								hasError={hasCatalogError}
+								isLoading={isCatalogLoading}
+								products={visibleProducts}
+							/>
 						</div>
 					</section>
 				</div>

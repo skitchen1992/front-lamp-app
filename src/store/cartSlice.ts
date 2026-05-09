@@ -1,8 +1,9 @@
 import {createSelector, createSlice, type PayloadAction} from '@reduxjs/toolkit'
-import {findProductById} from '@/data/products'
+import type {Product} from '@/data/products'
 import type {RootState} from '@/store'
 
 interface CartItem {
+	product: Product
 	productId: string
 	quantity: number
 }
@@ -12,11 +13,7 @@ interface CartState {
 }
 
 const initialState: CartState = {
-	items: [
-		{productId: 'led-e27-12w', quantity: 10},
-		{productId: 'hal-g9-40w', quantity: 5},
-		{productId: 'ind-led-50w', quantity: 2}
-	]
+	items: []
 }
 
 const MIN_QUANTITY = 1
@@ -27,18 +24,24 @@ const cartSlice = createSlice({
 	reducers: {
 		addToCart(
 			state,
-			action: PayloadAction<{productId: string; quantity: number}>
+			action: PayloadAction<{product: Product; quantity: number}>
 		) {
+			const productId = action.payload.product.id
 			const item = state.items.find(
-				cartItem => cartItem.productId === action.payload.productId
+				cartItem => cartItem.productId === productId
 			)
 
 			if (item) {
 				item.quantity += action.payload.quantity
+				item.product = action.payload.product
 				return
 			}
 
-			state.items.push(action.payload)
+			state.items.push({
+				product: action.payload.product,
+				productId,
+				quantity: action.payload.quantity
+			})
 		},
 		clearCart(state) {
 			state.items = []
@@ -110,15 +113,12 @@ export function selectCartQuantity(state: RootState) {
 }
 
 export function selectCartSubtotal(state: RootState) {
-	return selectCartItems(state).reduce((total, item) => {
-		const product = findProductById(item.productId)
-		return total + (product?.price ?? 0) * item.quantity
-	}, 0)
+	return selectCartItems(state).reduce(
+		(total, item) => total + item.product.price * item.quantity,
+		0
+	)
 }
 
 export const selectCartViewItems = createSelector([selectCartItems], items =>
-	items.flatMap(item => {
-		const product = findProductById(item.productId)
-		return product ? [{...item, product}] : []
-	})
+	items.map(item => ({...item, product: item.product}))
 )

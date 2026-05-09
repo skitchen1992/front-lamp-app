@@ -86,7 +86,7 @@ export function Cart() {
 
 	const handleClearCart = useCallback(() => {
 		dispatch(clearCart())
-	}, [dispatch])
+	}, [])
 
 	return (
 		<>

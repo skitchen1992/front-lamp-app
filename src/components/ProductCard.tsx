@@ -14,10 +14,12 @@ interface ProductCardProperties {
 
 export function ProductCard({product}: ProductCardProperties) {
 	const dispatch = useAppDispatch()
+
 	const badgeVariant = product.status === 'low' ? 'warning' : 'success'
+
 	const handleAddToCart = useCallback(() => {
-		dispatch(addToCart({productId: product.id, quantity: 1}))
-	}, [dispatch, product.id])
+		dispatch(addToCart({product, quantity: 1}))
+	}, [dispatch, product])
 
 	return (
 		<article className='overflow-hidden rounded-md border bg-card text-card-foreground shadow-xs'>

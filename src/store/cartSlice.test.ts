@@ -1,4 +1,9 @@
 import {
+	halogenFixtureProduct,
+	ledFixtureProduct,
+	luminescentFixtureProduct
+} from '@/test/productManagementFixtures'
+import {
 	addToCart,
 	cartReducer,
 	clearCart,
@@ -12,46 +17,73 @@ import {
 	selectCartViewItems,
 	setCartItemQuantity
 } from './cartSlice'
-import type {RootState} from './index'
+import {createAppStore, type RootState} from './index'
 
 function stateWithCartItems(items: RootState['cart']['items']): RootState {
 	return {
+		...createAppStore().getState(),
 		cart: {items}
 	}
 }
 
-it('updates cart items and keeps quantities above zero', () => {
+it('adds cart items and refreshes product snapshots', () => {
 	let state = cartReducer(
 		undefined,
-		addToCart({productId: 'led-e27-12w', quantity: 2})
+		addToCart({product: ledFixtureProduct, quantity: 10})
+	)
+	state = cartReducer(
+		state,
+		addToCart({product: ledFixtureProduct, quantity: 2})
 	)
 	expect(
-		state.items.find(item => item.productId === 'led-e27-12w')?.quantity
+		state.items.find(item => item.productId === ledFixtureProduct.id)?.quantity
 	).toBe(12)
 
-	state = cartReducer(state, addToCart({productId: 'lum-t8-18w', quantity: 3}))
-	expect(state.items).toContainEqual({productId: 'lum-t8-18w', quantity: 3})
+	state = cartReducer(
+		state,
+		addToCart({product: luminescentFixtureProduct, quantity: 3})
+	)
+	expect(state.items).toContainEqual({
+		product: luminescentFixtureProduct,
+		productId: luminescentFixtureProduct.id,
+		quantity: 3
+	})
+})
 
-	state = cartReducer(state, decrementCartItem('lum-t8-18w'))
+it('updates cart quantities, removes lines, and clears the cart', () => {
+	let state = cartReducer(
+		undefined,
+		addToCart({product: luminescentFixtureProduct, quantity: 3})
+	)
+	state = cartReducer(state, decrementCartItem(luminescentFixtureProduct.id))
 	expect(
-		state.items.find(item => item.productId === 'lum-t8-18w')?.quantity
+		state.items.find(item => item.productId === luminescentFixtureProduct.id)
+			?.quantity
 	).toBe(2)
 
 	state = cartReducer(
 		state,
-		setCartItemQuantity({productId: 'lum-t8-18w', quantity: 0})
+		setCartItemQuantity({productId: luminescentFixtureProduct.id, quantity: 0})
 	)
 	expect(
-		state.items.find(item => item.productId === 'lum-t8-18w')?.quantity
+		state.items.find(item => item.productId === luminescentFixtureProduct.id)
+			?.quantity
 	).toBe(1)
 
-	state = cartReducer(state, incrementCartItem('lum-t8-18w'))
+	state = cartReducer(state, incrementCartItem(luminescentFixtureProduct.id))
 	expect(
-		state.items.find(item => item.productId === 'lum-t8-18w')?.quantity
+		state.items.find(item => item.productId === luminescentFixtureProduct.id)
+			?.quantity
 	).toBe(2)
 
-	state = cartReducer(state, removeCartItem('hal-g9-40w'))
-	expect(state.items.some(item => item.productId === 'hal-g9-40w')).toBe(false)
+	state = cartReducer(
+		state,
+		addToCart({product: halogenFixtureProduct, quantity: 5})
+	)
+	state = cartReducer(state, removeCartItem(halogenFixtureProduct.id))
+	expect(
+		state.items.some(item => item.productId === halogenFixtureProduct.id)
+	).toBe(false)
 
 	state = cartReducer(state, clearCart())
 	expect(state.items).toEqual([])
@@ -65,17 +97,20 @@ it('ignores updates for unknown cart lines', () => {
 		setCartItemQuantity({productId: 'missing-product', quantity: 5})
 	)
 
-	expect(selectCartLineCount(stateWithCartItems(state.items))).toBe(3)
+	expect(selectCartLineCount(stateWithCartItems(state.items))).toBe(0)
 })
 
 it('selects quantities, totals, and product-backed view items', () => {
 	const state = stateWithCartItems([
-		{productId: 'led-e27-12w', quantity: 2},
-		{productId: 'missing-product', quantity: 9}
+		{
+			product: ledFixtureProduct,
+			productId: ledFixtureProduct.id,
+			quantity: 2
+		}
 	])
 
-	expect(selectCartItems(state)).toHaveLength(2)
-	expect(selectCartQuantity(state)).toBe(11)
+	expect(selectCartItems(state)).toHaveLength(1)
+	expect(selectCartQuantity(state)).toBe(2)
 	expect(selectCartSubtotal(state)).toBe(178)
 	expect(selectCartViewItems(state)).toHaveLength(1)
 })
