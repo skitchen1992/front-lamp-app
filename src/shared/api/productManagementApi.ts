@@ -4,7 +4,7 @@ import type {
 	ProductLifecycleStatus,
 	ProductListResponse,
 	ProductResponse
-} from '@/data/products'
+} from '@/entities/product/products'
 
 interface ListProductsParameters {
 	limit: number

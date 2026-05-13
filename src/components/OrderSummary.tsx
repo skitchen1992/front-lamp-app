@@ -2,17 +2,17 @@ import {skipToken} from '@reduxjs/toolkit/query'
 import {RefreshCw} from 'lucide-react'
 import type {ReactNode} from 'react'
 import {useMemo} from 'react'
-import {formatPrice} from '@/lib/format'
-import {
-	type DeliveryType,
-	useCalculateCartQuery
-} from '@/services/orderManagementApi'
+import {useAppSelector} from '@/app/store/hooks'
 import {
 	selectCartItems,
 	selectCartQuantity,
 	selectCartSubtotal
-} from '@/store/cartSlice'
-import {useAppSelector} from '@/store/hooks'
+} from '@/features/cart/cartSlice'
+import {
+	type DeliveryType,
+	useCalculateCartQuery
+} from '@/shared/api/orderManagementApi'
+import {formatPrice} from '@/shared/lib/format'
 
 interface OrderSummaryProperties {
 	action?: ReactNode

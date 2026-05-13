@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import type {PropsWithChildren, ReactElement} from 'react'
 import {Provider} from 'react-redux'
 import {BrowserRouter} from 'react-router'
-import {type AppStore, createAppStore} from '@/store'
+import {type AppStore, createAppStore} from '@/app/store'
 
 interface ExtendedRenderOptions extends Omit<RenderOptions, 'wrapper'> {
 	route?: string

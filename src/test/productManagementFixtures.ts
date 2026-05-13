@@ -4,7 +4,7 @@ import {
 	type ProductListResponse,
 	type ProductResponse,
 	toProduct
-} from '@/data/products'
+} from '@/entities/product/products'
 
 export const ledCategoryResponse: CategoryResponse = {
 	createdAt: '2026-04-25T16:37:49.552844Z',

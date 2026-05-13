@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest'
 import {afterAll, afterEach, beforeAll} from 'vitest'
-import {productManagementServer} from './test/productManagementServer'
+import {productManagementServer} from './productManagementServer'
 
 beforeAll(() => {
 	productManagementServer.listen({onUnhandledRequest: 'error'})

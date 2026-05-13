@@ -3,7 +3,7 @@ import type {
 	CartCalculationResponse,
 	CreateOrderRequest,
 	OrderResponse
-} from '@/services/orderManagementApi'
+} from '@/shared/api/orderManagementApi'
 import {productResponses} from './productManagementFixtures'
 
 export const orderNumber = 'ORD-2026-00001'

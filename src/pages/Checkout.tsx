@@ -1,20 +1,34 @@
 import {MapPin} from 'lucide-react'
-import {type ChangeEvent, type FormEvent, useCallback, useState} from 'react'
+import {
+	type ChangeEvent,
+	type FormEvent,
+	useCallback,
+	useId,
+	useState
+} from 'react'
 import {Navigate, useNavigate} from 'react-router'
+import {useAppSelector} from '@/app/store/hooks'
 import {CheckoutHeader} from '@/components/CheckoutHeader'
 import {Head} from '@/components/Head'
 import {OrderSummary} from '@/components/OrderSummary'
-import {Button} from '@/components/ui/Button'
-import {Input} from '@/components/ui/input'
-import {formatPrice} from '@/lib/format'
+import {selectCartPageData} from '@/features/cart/cartSlice'
 import {
 	type DeliveryType,
 	useCreateOrderMutation
-} from '@/services/orderManagementApi'
-import {useAppSelector} from '@/store/hooks'
-import {selectCartPageData} from '@/store/cartSlice'
+} from '@/shared/api/orderManagementApi'
+import {formatPrice} from '@/shared/lib/format'
+import {Button} from '@/shared/ui/Button'
+import {Input} from '@/shared/ui/input'
 
+// biome-ignore lint/complexity/noExcessiveLinesPerFunction: Checkout owns the route form flow while API integration stays simple.
 export function Checkout() {
+	const customerNameId = useId()
+	const phoneId = useId()
+	const emailId = useId()
+	const companyNameId = useId()
+	const deliveryTypeId = useId()
+	const deliveryAddressId = useId()
+	const commentId = useId()
 	const navigate = useNavigate()
 	const [deliveryType, setDeliveryType] = useState<DeliveryType>('delivery')
 	const [createOrder, createOrderResult] = useCreateOrderMutation()
@@ -51,7 +65,7 @@ export function Checkout() {
 				// RTK Query keeps the mutation error in state for the inline alert.
 			}
 		},
-		[createOrder, deliveryType, items]
+		[createOrder, deliveryType, items, navigate]
 	)
 
 	if (lineCount === 0) {
@@ -72,46 +86,54 @@ export function Checkout() {
 							Контактные данные и доставка
 						</h1>
 						<div className='grid gap-5 rounded-md border bg-background p-6 sm:grid-cols-2'>
-							<label className='grid gap-2 text-sm'>
+							<label className='grid gap-2 text-sm' htmlFor={customerNameId}>
 								<span className='font-medium'>ФИО / Контактное лицо *</span>
 								<Input
 									className='h-10 bg-background'
 									defaultValue='Иванов Иван Иванович'
+									id={customerNameId}
 									name='customerName'
 									required={true}
 								/>
 							</label>
-							<label className='grid gap-2 text-sm'>
+							<label className='grid gap-2 text-sm' htmlFor={phoneId}>
 								<span className='font-medium'>Телефон *</span>
 								<Input
 									className='h-10 bg-background'
 									defaultValue='+7 (999) 123-45-67'
+									id={phoneId}
 									name='phone'
 									required={true}
 								/>
 							</label>
-							<label className='grid gap-2 text-sm'>
+							<label className='grid gap-2 text-sm' htmlFor={emailId}>
 								<span className='font-medium'>E-mail *</span>
 								<Input
 									className='h-10 bg-background'
 									defaultValue='ivan@example.com'
+									id={emailId}
 									name='email'
 									required={true}
 									type='email'
 								/>
 							</label>
-							<label className='grid gap-2 text-sm'>
+							<label className='grid gap-2 text-sm' htmlFor={companyNameId}>
 								<span className='font-medium'>Организация (необязательно)</span>
 								<Input
 									className='h-10 bg-background'
 									defaultValue='ООО «Свет-Электро»'
+									id={companyNameId}
 									name='companyName'
 								/>
 							</label>
-							<label className='grid gap-2 text-sm sm:col-span-2'>
+							<label
+								className='grid gap-2 text-sm sm:col-span-2'
+								htmlFor={deliveryTypeId}
+							>
 								<span className='font-medium'>Способ получения *</span>
 								<select
 									className='h-10 rounded-md border bg-background px-3 outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50'
+									id={deliveryTypeId}
 									name='deliveryType'
 									onChange={handleDeliveryTypeChange}
 									required={true}
@@ -121,7 +143,10 @@ export function Checkout() {
 									<option value='pickup'>Самовывоз</option>
 								</select>
 							</label>
-							<label className='grid gap-2 text-sm sm:col-span-2'>
+							<label
+								className='grid gap-2 text-sm sm:col-span-2'
+								htmlFor={deliveryAddressId}
+							>
 								<span className='font-medium'>Адрес доставки / самовывоз</span>
 								<div className='relative'>
 									<MapPin
@@ -131,15 +156,20 @@ export function Checkout() {
 									<Input
 										className='h-10 bg-background pl-9'
 										defaultValue='г. Москва, ул. Ленина, 42'
+										id={deliveryAddressId}
 										name='deliveryAddress'
 									/>
 								</div>
 							</label>
-							<label className='grid gap-2 text-sm sm:col-span-2'>
+							<label
+								className='grid gap-2 text-sm sm:col-span-2'
+								htmlFor={commentId}
+							>
 								<span className='font-medium'>Комментарий к заказу</span>
 								<textarea
 									className='min-h-20 resize-none rounded-md border bg-background px-3 py-3 outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50'
 									defaultValue='Просьба упаковать в одну коробку...'
+									id={commentId}
 									name='comment'
 								/>
 							</label>

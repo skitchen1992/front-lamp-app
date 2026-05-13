@@ -1,31 +1,17 @@
 import {Factory, Mail, MapPin, Phone, Truck} from 'lucide-react'
-import {
-	type ChangeEvent,
-	useCallback,
-	useEffect,
-	useId,
-	useMemo
-} from 'react'
+import {type ChangeEvent, useCallback, useEffect, useId, useMemo} from 'react'
 import {Link} from 'react-router'
+import {useAppDispatch, useAppSelector} from '@/app/store/hooks'
 import {Head} from '@/components/Head'
 import {ProductCard} from '@/components/ProductCard'
 import {StoreHeader} from '@/components/StoreHeader'
-import {Input} from '@/components/ui/input'
-import {Label} from '@/components/ui/label'
 import {
 	type CategoryResponse,
 	type Product,
 	type ProductCategory,
 	toProduct,
 	toProductCategories
-} from '@/data/products'
-import {parsePriceFilter} from '@/lib/format'
-import {cn} from '@/lib/utils'
-import {
-	useListCategoriesQuery,
-	useListProductsQuery
-} from '@/services/productManagementApi'
-import {useAppDispatch, useAppSelector} from '@/store/hooks'
+} from '@/entities/product/products'
 import {
 	selectCatalogFilters,
 	setCatalogCategory,
@@ -35,7 +21,15 @@ import {
 	setCatalogMaxPriceInput,
 	setCatalogMinPriceInput,
 	setCatalogQuery
-} from '@/store/catalogSlice'
+} from '@/features/catalog/catalogSlice'
+import {
+	useListCategoriesQuery,
+	useListProductsQuery
+} from '@/shared/api/productManagementApi'
+import {parsePriceFilter} from '@/shared/lib/format'
+import {cn} from '@/shared/lib/utils'
+import {Input} from '@/shared/ui/input'
+import {Label} from '@/shared/ui/label'
 
 const SEARCH_DEBOUNCE_MS = 300
 const emptyCategories: CategoryResponse[] = []
@@ -120,8 +114,13 @@ function CatalogResults({
 	))
 }
 
+// biome-ignore lint/complexity/noExcessiveLinesPerFunction: Catalog keeps page orchestration close to the route.
 export function Catalog() {
 	const searchId = useId()
+	const productsId = useId()
+	const aboutId = useId()
+	const deliveryId = useId()
+	const contactsId = useId()
 	const dispatch = useAppDispatch()
 
 	const {
@@ -144,7 +143,7 @@ export function Catalog() {
 		return () => {
 			globalThis.clearTimeout(handle)
 		}
-	}, [ query])
+	}, [query, dispatch])
 
 	useEffect(() => {
 		const handle = globalThis.setTimeout(() => {
@@ -155,7 +154,7 @@ export function Catalog() {
 		return () => {
 			globalThis.clearTimeout(handle)
 		}
-	}, [ maxPriceInput, minPriceInput])
+	}, [maxPriceInput, minPriceInput, dispatch])
 
 	const searchArg = debouncedQuery.length > 0 ? debouncedQuery : undefined
 	const productsQuery = useListProductsQuery({
@@ -171,28 +170,28 @@ export function Catalog() {
 		(value: string) => {
 			dispatch(setCatalogCategory(value))
 		},
-		[]
+		[dispatch]
 	)
 
 	const handleQueryChange = useCallback(
 		(event: ChangeEvent<HTMLInputElement>) => {
 			dispatch(setCatalogQuery(event.target.value))
 		},
-		[]
+		[dispatch]
 	)
 
 	const handleMinPriceChange = useCallback(
 		(event: ChangeEvent<HTMLInputElement>) => {
 			dispatch(setCatalogMinPriceInput(event.target.value))
 		},
-		[]
+		[dispatch]
 	)
 
 	const handleMaxPriceChange = useCallback(
 		(event: ChangeEvent<HTMLInputElement>) => {
 			dispatch(setCatalogMaxPriceInput(event.target.value))
 		},
-		[]
+		[dispatch]
 	)
 
 	const categoryData = categoriesQuery.data ?? emptyCategories
@@ -238,7 +237,7 @@ export function Catalog() {
 						</div>
 						<Link
 							className='inline-flex h-12 w-full items-center justify-center rounded-md bg-background px-6 font-medium text-primary text-sm shadow-xs transition hover:bg-background/90 sm:w-auto'
-							to='#products'
+							to={`#${productsId}`}
 						>
 							Смотреть каталог
 						</Link>
@@ -306,7 +305,7 @@ export function Catalog() {
 						</div>
 					</aside>
 
-					<section id='products'>
+					<section id={productsId}>
 						<div className='mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
 							<h2 className='font-bold text-xl'>
 								Все товары ({visibleProducts.length})
@@ -332,7 +331,7 @@ export function Catalog() {
 					</section>
 				</div>
 
-				<section className='border-t bg-background' id='about'>
+				<section className='border-t bg-background' id={aboutId}>
 					<div className='mx-auto grid max-w-7xl gap-4 px-4 py-8 sm:px-6 md:grid-cols-3 lg:px-8'>
 						<div className='rounded-md border p-5'>
 							<Factory aria-hidden={true} className='size-5 text-primary' />
@@ -341,14 +340,14 @@ export function Catalog() {
 								Собственное производство и входной контроль каждой партии.
 							</p>
 						</div>
-						<div className='rounded-md border p-5' id='delivery'>
+						<div className='rounded-md border p-5' id={deliveryId}>
 							<Truck aria-hidden={true} className='size-5 text-primary' />
 							<h2 className='mt-3 font-semibold'>Доставка</h2>
 							<p className='mt-2 text-muted-foreground text-sm'>
 								Самовывоз со склада или отгрузка транспортной компанией.
 							</p>
 						</div>
-						<div className='rounded-md border p-5' id='contacts'>
+						<div className='rounded-md border p-5' id={contactsId}>
 							<Phone aria-hidden={true} className='size-5 text-primary' />
 							<h2 className='mt-3 font-semibold'>Контакты</h2>
 							<p className='mt-2 flex items-center gap-2 text-sm'>

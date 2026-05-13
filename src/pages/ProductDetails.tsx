@@ -2,25 +2,25 @@ import {skipToken} from '@reduxjs/toolkit/query'
 import {ChevronRight, ShoppingCart} from 'lucide-react'
 import {useCallback, useMemo, useState} from 'react'
 import {Link, Navigate, useParams} from 'react-router'
+import {useAppDispatch} from '@/app/store/hooks'
 import {Head} from '@/components/Head'
 import {QuantityStepper} from '@/components/QuantityStepper'
 import {StoreHeader} from '@/components/StoreHeader'
-import {Badge} from '@/components/ui/Badge'
-import {Button} from '@/components/ui/Button'
 import {
 	type CategoryResponse,
 	type Product,
 	type ProductImage,
 	toProduct
-} from '@/data/products'
-import {formatPrice} from '@/lib/format'
+} from '@/entities/product/products'
+import {addToCart} from '@/features/cart/cartSlice'
 import {
 	useGetProductQuery,
 	useListCategoriesQuery,
 	useListProductsQuery
-} from '@/services/productManagementApi'
-import {addToCart} from '@/store/cartSlice'
-import {useAppDispatch} from '@/store/hooks'
+} from '@/shared/api/productManagementApi'
+import {formatPrice} from '@/shared/lib/format'
+import {Badge} from '@/shared/ui/Badge'
+import {Button} from '@/shared/ui/Button'
 
 const emptyCategories: CategoryResponse[] = []
 
@@ -57,6 +57,7 @@ function ProductThumbnail({
 	)
 }
 
+// biome-ignore lint/complexity/noExcessiveLinesPerFunction: Product details keeps query, gallery and purchase state in one route component.
 export function ProductDetails() {
 	const dispatch = useAppDispatch()
 	const {productSlug} = useParams()

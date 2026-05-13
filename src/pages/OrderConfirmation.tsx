@@ -1,12 +1,12 @@
 import {Check, ShoppingBag} from 'lucide-react'
 import {useEffect} from 'react'
 import {Link, Navigate, useLocation} from 'react-router'
+import {useAppDispatch} from '@/app/store/hooks'
 import {CheckoutHeader} from '@/components/CheckoutHeader'
 import {Head} from '@/components/Head'
-import {formatPrice} from '@/lib/format'
-import type {OrderResponse} from '@/services/orderManagementApi'
-import {clearCart} from '@/store/cartSlice'
-import {useAppDispatch} from '@/store/hooks'
+import {clearCart} from '@/features/cart/cartSlice'
+import type {OrderResponse} from '@/shared/api/orderManagementApi'
+import {formatPrice} from '@/shared/lib/format'
 
 interface OrderConfirmationLocationState {
 	order?: OrderResponse
@@ -21,7 +21,7 @@ export function OrderConfirmation() {
 		if (order) {
 			dispatch(clearCart())
 		}
-	}, [ order])
+	}, [order, dispatch])
 
 	if (!order) {
 		return <Navigate replace={true} to='/catalog' />

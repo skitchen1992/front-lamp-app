@@ -1,7 +1,8 @@
 import {HttpResponse, http} from 'msw'
+import {App} from '@/app/App'
+import {type AppStore, createAppStore} from '@/app/store'
 import {OrderSummary} from '@/components/OrderSummary'
-import {type AppStore, createAppStore} from '@/store'
-import {addToCart, clearCart} from '@/store/cartSlice'
+import {addToCart, clearCart} from '@/features/cart/cartSlice'
 import {orderNumber} from '@/test/orderManagementFixtures'
 import {
 	halogenFixtureProduct,
@@ -10,7 +11,6 @@ import {
 	productListResponse
 } from '@/test/productManagementFixtures'
 import {productManagementServer} from '@/test/productManagementServer'
-import {App} from './App'
 import {render, screen, waitFor} from './test-utils'
 
 const widths = [360, 1280]

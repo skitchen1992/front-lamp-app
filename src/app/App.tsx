@@ -1,19 +1,15 @@
 import {Navigate, Route, Routes} from 'react-router'
+import {AdminLogin, AdminRegister} from '@/pages/admin/auth'
+import {AdminDashboard} from '@/pages/admin/dashboard'
+import {AdminInquiries} from '@/pages/admin/inquiries'
+import {AdminLayout} from '@/pages/admin/layout'
+import {AdminOrders} from '@/pages/admin/orders'
+import {AdminProductEditor, AdminProducts} from '@/pages/admin/products'
 import {Cart} from '@/pages/Cart'
 import {Catalog} from '@/pages/Catalog'
 import {Checkout} from '@/pages/Checkout'
 import {OrderConfirmation} from '@/pages/OrderConfirmation'
 import {ProductDetails} from '@/pages/ProductDetails'
-import {
-	AdminDashboard,
-	AdminInquiries,
-	AdminLayout,
-	AdminLogin,
-	AdminOrders,
-	AdminProductEditor,
-	AdminProducts,
-	AdminRegister
-} from './pages/Admin'
 
 export function App() {
 	return (

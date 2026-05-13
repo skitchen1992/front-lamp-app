@@ -1,5 +1,5 @@
 import type {HTMLAttributes} from 'react'
-import {cn} from '@/lib/utils'
+import {cn} from '@/shared/lib/utils'
 
 const badgeClasses = {
 	default: 'bg-primary text-primary-foreground',

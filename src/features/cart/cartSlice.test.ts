@@ -1,3 +1,4 @@
+import {createAppStore, type RootState} from '@/app/store'
 import {
 	halogenFixtureProduct,
 	ledFixtureProduct,
@@ -17,7 +18,6 @@ import {
 	selectCartViewItems,
 	setCartItemQuantity
 } from './cartSlice'
-import {createAppStore, type RootState} from './index'
 
 function stateWithCartItems(items: RootState['cart']['items']): RootState {
 	return {

@@ -1,6 +1,6 @@
 import {Minus, Plus} from 'lucide-react'
-import {Button} from '@/components/ui/Button'
-import {cn} from '@/lib/utils'
+import {cn} from '@/shared/lib/utils'
+import {Button} from '@/shared/ui/Button'
 
 interface QuantityStepperProperties {
 	className?: string

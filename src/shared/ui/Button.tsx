@@ -1,5 +1,5 @@
 import type {ButtonHTMLAttributes} from 'react'
-import {cn} from '@/lib/utils'
+import {cn} from '@/shared/lib/utils'
 
 const variantClasses = {
 	default: 'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90',

@@ -1,21 +1,21 @@
 import {ArrowRight, ShoppingBag, Trash2} from 'lucide-react'
 import {useCallback} from 'react'
 import {Link} from 'react-router'
+import {useAppDispatch, useAppSelector} from '@/app/store/hooks'
 import {Head} from '@/components/Head'
 import {OrderSummary} from '@/components/OrderSummary'
 import {QuantityStepper} from '@/components/QuantityStepper'
 import {StoreHeader} from '@/components/StoreHeader'
-import {Button} from '@/components/ui/Button'
-import type {Product} from '@/data/products'
-import {formatCartLineCount, formatPrice} from '@/lib/format'
+import type {Product} from '@/entities/product/products'
 import {
 	clearCart,
 	decrementCartItem,
 	incrementCartItem,
 	removeCartItem,
 	selectCartPageData
-} from '@/store/cartSlice'
-import {useAppDispatch, useAppSelector} from '@/store/hooks'
+} from '@/features/cart/cartSlice'
+import {formatCartLineCount, formatPrice} from '@/shared/lib/format'
+import {Button} from '@/shared/ui/Button'
 
 interface CartLineItemProperties {
 	product: Product
@@ -28,15 +28,15 @@ function CartLineItem({product, productId, quantity}: CartLineItemProperties) {
 
 	const handleDecrement = useCallback(() => {
 		dispatch(decrementCartItem(productId))
-	}, [productId])
+	}, [productId, dispatch])
 
 	const handleIncrement = useCallback(() => {
 		dispatch(incrementCartItem(productId))
-	}, [productId])
+	}, [productId, dispatch])
 
 	const handleRemove = useCallback(() => {
 		dispatch(removeCartItem(productId))
-	}, [productId])
+	}, [productId, dispatch])
 
 	return (
 		<article className='grid gap-4 rounded-md border bg-background p-4 sm:grid-cols-[5rem_1fr_auto] sm:items-center'>
@@ -86,7 +86,7 @@ export function Cart() {
 
 	const handleClearCart = useCallback(() => {
 		dispatch(clearCart())
-	}, [])
+	}, [dispatch])
 
 	return (
 		<>

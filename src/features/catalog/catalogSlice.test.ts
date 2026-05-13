@@ -1,3 +1,4 @@
+import {createAppStore, type RootState} from '@/app/store'
 import {
 	catalogReducer,
 	selectCatalogCategory,
@@ -15,7 +16,6 @@ import {
 	setCatalogMinPriceInput,
 	setCatalogQuery
 } from './catalogSlice'
-import {createAppStore, type RootState} from './index'
 
 function rootWithCatalog(patch: Partial<RootState['catalog']>): RootState {
 	const base = createAppStore().getState()

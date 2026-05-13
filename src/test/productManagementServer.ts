@@ -3,7 +3,7 @@ import {setupServer} from 'msw/node'
 import type {
 	CartCalculationRequest,
 	CreateOrderRequest
-} from '@/services/orderManagementApi'
+} from '@/shared/api/orderManagementApi'
 import {
 	createCartCalculationResponse,
 	createOrderResponse

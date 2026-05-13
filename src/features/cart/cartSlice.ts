@@ -1,6 +1,6 @@
 import {createSelector, createSlice, type PayloadAction} from '@reduxjs/toolkit'
-import type {Product} from '@/data/products'
-import type {RootState} from '@/store'
+import type {RootState} from '@/app/store'
+import type {Product} from '@/entities/product/products'
 
 interface CartItem {
 	product: Product

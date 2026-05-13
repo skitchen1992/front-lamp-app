@@ -1,9 +1,9 @@
+import {App} from '@/app/App'
 import {
 	halogenFixtureProduct,
 	ledFixtureProduct,
 	luminescentFixtureProduct
 } from '@/test/productManagementFixtures'
-import {App} from './App'
 import {render, screen, waitFor} from './test-utils'
 
 it('filters catalog by debounced price range', async () => {
