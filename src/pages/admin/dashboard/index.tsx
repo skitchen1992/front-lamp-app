@@ -10,9 +10,9 @@ import {
 import {Link} from 'react-router'
 import {formatPrice} from '@/shared/lib/format'
 import {cn} from '@/shared/lib/utils'
-import {adminOrders, orderStatusMeta} from './data'
-import {AdminContentShell, AdminUserBadge} from './layout'
-import {StatusBadge} from './shared'
+import {AdminContentShell, AdminUserBadge} from '../_components/layout'
+import {AdminPanel, StatusBadge} from '../_components/shared'
+import {adminOrders, orderStatusMeta} from '../_lib/data'
 
 interface DashboardCardProperties {
 	icon: LucideIcon
@@ -85,7 +85,7 @@ export function AdminDashboard() {
 			</div>
 
 			<div className='mt-6 grid gap-5 xl:grid-cols-[minmax(0,1fr)_19rem]'>
-				<section className='overflow-hidden rounded-lg border bg-background shadow-xs'>
+				<AdminPanel className='overflow-hidden'>
 					<div className='flex items-center justify-between border-b px-5 py-4'>
 						<h2 className='font-semibold text-lg'>Последние заказы</h2>
 						<Link
@@ -134,9 +134,9 @@ export function AdminDashboard() {
 							</tbody>
 						</table>
 					</div>
-				</section>
+				</AdminPanel>
 
-				<section className='h-max rounded-lg border bg-background p-5 shadow-xs'>
+				<AdminPanel className='h-max p-5'>
 					<h2 className='font-semibold text-lg'>Быстрые действия</h2>
 					<div className='mt-4 space-y-3'>
 						<QuickActionLink
@@ -156,7 +156,7 @@ export function AdminDashboard() {
 							to='/admin/inquiries'
 						/>
 					</div>
-				</section>
+				</AdminPanel>
 			</div>
 		</AdminContentShell>
 	)

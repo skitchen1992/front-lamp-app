@@ -2,7 +2,22 @@ import type {LucideIcon} from 'lucide-react'
 import type {ReactNode} from 'react'
 import {Link} from 'react-router'
 import {cn} from '@/shared/lib/utils'
-import type {StatusMeta} from './data'
+import type {StatusMeta} from '../_lib/data'
+
+interface AdminPanelProperties {
+	children: ReactNode
+	className?: string
+}
+
+export function AdminPanel({children, className}: AdminPanelProperties) {
+	return (
+		<section
+			className={cn('rounded-lg border bg-background shadow-xs', className)}
+		>
+			{children}
+		</section>
+	)
+}
 
 export function StatusBadge({className, label}: StatusMeta) {
 	return (

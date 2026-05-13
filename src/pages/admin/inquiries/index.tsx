@@ -1,7 +1,8 @@
 import {useCallback, useState} from 'react'
 import {cn} from '@/shared/lib/utils'
-import {type Inquiry, inquiries, inquiryStatusMeta} from './data'
-import {StatusBadge} from './shared'
+import {AdminSplitShell} from '../_components/layout'
+import {AdminPanel, StatusBadge} from '../_components/shared'
+import {type Inquiry, inquiries, inquiryStatusMeta} from '../_lib/data'
 
 export function AdminInquiries() {
 	const [selectedInquiryId, setSelectedInquiryId] = useState(inquiries[0].id)
@@ -9,24 +10,22 @@ export function AdminInquiries() {
 		inquiries.find(inquiry => inquiry.id === selectedInquiryId) ?? inquiries[0]
 
 	return (
-		<section className='grid min-h-screen bg-slate-100 xl:grid-cols-[minmax(0,1fr)_40rem]'>
-			<div className='px-4 py-7 sm:px-6 lg:px-7'>
-				<h1 className='font-bold text-3xl tracking-normal'>
-					Обращения (3 новых)
-				</h1>
-				<div className='mt-5 space-y-4'>
-					{inquiries.map(inquiry => (
-						<InquiryListItem
-							inquiry={inquiry}
-							isSelected={inquiry.id === selectedInquiry.id}
-							key={inquiry.id}
-							onSelect={setSelectedInquiryId}
-						/>
-					))}
-				</div>
+		<AdminSplitShell
+			details={<InquiryDetails inquiry={selectedInquiry} />}
+			detailsSize='wide'
+			title='Обращения (3 новых)'
+		>
+			<div className='space-y-4'>
+				{inquiries.map(inquiry => (
+					<InquiryListItem
+						inquiry={inquiry}
+						isSelected={inquiry.id === selectedInquiry.id}
+						key={inquiry.id}
+						onSelect={setSelectedInquiryId}
+					/>
+				))}
 			</div>
-			<InquiryDetails inquiry={selectedInquiry} />
-		</section>
+		</AdminSplitShell>
 	)
 }
 
@@ -49,7 +48,7 @@ function InquiryListItem({
 		<button
 			className={cn(
 				'w-full rounded-lg border bg-background p-4 text-left shadow-xs transition hover:border-blue-300',
-				isSelected && 'border-red-500'
+				isSelected && 'border-blue-600 bg-blue-50'
 			)}
 			onClick={handleSelect}
 			type='button'
@@ -73,13 +72,13 @@ function InquiryListItem({
 
 function InquiryDetails({inquiry}: {inquiry: Inquiry}) {
 	return (
-		<aside className='border-slate-200 border-l bg-background px-4 py-8 sm:px-6 lg:px-8'>
+		<>
 			<div className='flex items-start justify-between gap-4'>
 				<h2 className='font-bold text-2xl'>{inquiry.subject}</h2>
 				<StatusBadge {...inquiryStatusMeta[inquiry.status]} />
 			</div>
 
-			<section className='mt-6 rounded-lg bg-slate-50 p-5'>
+			<AdminPanel className='mt-6 bg-slate-50 p-5 shadow-none'>
 				<p className='font-semibold text-slate-400 text-sm'>Отправитель</p>
 				<p className='mt-2 font-semibold'>{inquiry.name}</p>
 				<p className='mt-2 text-slate-500 text-sm'>
@@ -95,14 +94,14 @@ function InquiryDetails({inquiry}: {inquiry: Inquiry}) {
 				<p className='mt-2 text-slate-400 text-sm italic'>
 					{inquiry.createdAt}
 				</p>
-			</section>
+			</AdminPanel>
 
-			<section className='mt-6 rounded-lg border p-5'>
+			<AdminPanel className='mt-6 p-5'>
 				<p className='font-semibold text-slate-400 text-sm'>Текст обращения</p>
 				<p className='mt-3 italic leading-7'>{inquiry.message}</p>
-			</section>
+			</AdminPanel>
 
-			<section className='mt-6 rounded-lg border bg-slate-50 p-5'>
+			<AdminPanel className='mt-6 bg-slate-50 p-5'>
 				<h3 className='font-semibold'>Изменить статус</h3>
 				<div className='mt-4 flex flex-wrap gap-2'>
 					{(['new', 'processing', 'answered', 'closed', 'spam'] as const).map(
@@ -110,7 +109,7 @@ function InquiryDetails({inquiry}: {inquiry: Inquiry}) {
 							<button
 								className={cn(
 									'h-9 rounded-md border bg-background px-3 font-medium text-slate-500 text-sm transition hover:bg-slate-100',
-									status === inquiry.status && 'border-red-500 text-red-500'
+									status === inquiry.status && 'border-blue-600 text-blue-600'
 								)}
 								key={status}
 								type='button'
@@ -120,7 +119,7 @@ function InquiryDetails({inquiry}: {inquiry: Inquiry}) {
 						)
 					)}
 				</div>
-			</section>
-		</aside>
+			</AdminPanel>
+		</>
 	)
 }

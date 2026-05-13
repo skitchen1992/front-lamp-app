@@ -1,8 +1,9 @@
 import {useCallback, useState} from 'react'
 import {formatPrice} from '@/shared/lib/format'
 import {cn} from '@/shared/lib/utils'
-import {type AdminOrder, adminOrders, orderStatusMeta} from './data'
-import {StatusBadge} from './shared'
+import {AdminSplitShell} from '../_components/layout'
+import {AdminPanel, StatusBadge} from '../_components/shared'
+import {type AdminOrder, adminOrders, orderStatusMeta} from '../_lib/data'
 
 const orderTabs = [
 	{label: 'Все (42)', value: 'all'},
@@ -17,39 +18,38 @@ export function AdminOrders() {
 		adminOrders.find(order => order.id === selectedOrderId) ?? adminOrders[0]
 
 	return (
-		<section className='grid min-h-screen bg-slate-100 xl:grid-cols-[minmax(0,1fr)_34rem]'>
-			<div className='px-4 py-7 sm:px-6 lg:px-7'>
-				<h1 className='font-bold text-3xl tracking-normal'>Список заказов</h1>
-				<div className='mt-5 flex gap-2 overflow-x-auto'>
-					{orderTabs.map(tab => (
-						<button
-							className={cn(
-								'h-9 shrink-0 rounded-md border px-4 font-medium text-sm transition',
-								tab.value === 'all'
-									? 'border-blue-600 bg-blue-600 text-white'
-									: 'bg-background text-slate-500 hover:bg-slate-50'
-							)}
-							key={tab.value}
-							type='button'
-						>
-							{tab.label}
-						</button>
-					))}
-				</div>
-
-				<div className='mt-6 space-y-4'>
-					{adminOrders.slice(0, 3).map(order => (
-						<OrderListItem
-							isSelected={order.id === selectedOrder.id}
-							key={order.id}
-							onSelect={setSelectedOrderId}
-							order={order}
-						/>
-					))}
-				</div>
+		<AdminSplitShell
+			details={<OrderDetails order={selectedOrder} />}
+			title='Список заказов'
+		>
+			<div className='flex gap-2 overflow-x-auto'>
+				{orderTabs.map(tab => (
+					<button
+						className={cn(
+							'h-9 shrink-0 rounded-md border px-4 font-medium text-sm transition',
+							tab.value === 'all'
+								? 'border-blue-600 bg-blue-600 text-white'
+								: 'bg-background text-slate-500 hover:bg-slate-50'
+						)}
+						key={tab.value}
+						type='button'
+					>
+						{tab.label}
+					</button>
+				))}
 			</div>
-			<OrderDetails order={selectedOrder} />
-		</section>
+
+			<div className='mt-6 space-y-4'>
+				{adminOrders.slice(0, 3).map(order => (
+					<OrderListItem
+						isSelected={order.id === selectedOrder.id}
+						key={order.id}
+						onSelect={setSelectedOrderId}
+						order={order}
+					/>
+				))}
+			</div>
+		</AdminSplitShell>
 	)
 }
 
@@ -92,7 +92,7 @@ function OrderListItem({isSelected, onSelect, order}: OrderListItemProperties) {
 
 function OrderDetails({order}: {order: AdminOrder}) {
 	return (
-		<aside className='border-slate-200 border-l bg-background px-4 py-7 sm:px-6 lg:px-8'>
+		<>
 			<div className='flex items-start justify-between gap-4'>
 				<div>
 					<h2 className='font-bold text-2xl'>Заказ #{order.orderNumber}</h2>
@@ -103,7 +103,7 @@ function OrderDetails({order}: {order: AdminOrder}) {
 				<StatusBadge {...orderStatusMeta[order.status]} />
 			</div>
 
-			<section className='mt-6 rounded-lg border bg-slate-50 p-4'>
+			<AdminPanel className='mt-6 bg-slate-50 p-4'>
 				<h3 className='font-semibold'>Изменить статус</h3>
 				<div className='mt-3 flex flex-wrap gap-2'>
 					{(['new', 'confirmed', 'processing', 'completed'] as const).map(
@@ -127,9 +127,9 @@ function OrderDetails({order}: {order: AdminOrder}) {
 						Отменить
 					</button>
 				</div>
-			</section>
+			</AdminPanel>
 
-			<section className='mt-6 rounded-lg border p-4'>
+			<AdminPanel className='mt-6 p-4'>
 				<h3 className='font-semibold'>Контактные данные</h3>
 				<dl className='mt-4 grid gap-3 text-sm'>
 					<DetailRow label='Клиент' value={order.customerName} />
@@ -137,9 +137,9 @@ function OrderDetails({order}: {order: AdminOrder}) {
 					<DetailRow label='E-mail' value={order.email} />
 					<DetailRow label='Адрес' value={order.deliveryAddress} />
 				</dl>
-			</section>
+			</AdminPanel>
 
-			<section className='mt-5 overflow-hidden rounded-lg border'>
+			<AdminPanel className='mt-5 overflow-hidden'>
 				<div className='border-b px-4 py-3'>
 					<h3 className='font-semibold'>Состав заказа</h3>
 				</div>
@@ -163,8 +163,8 @@ function OrderDetails({order}: {order: AdminOrder}) {
 						</p>
 					</div>
 				</div>
-			</section>
-		</aside>
+			</AdminPanel>
+		</>
 	)
 }
 

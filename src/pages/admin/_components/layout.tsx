@@ -101,22 +101,66 @@ export function AdminLayout() {
 
 interface AdminContentShellProperties {
 	actions?: ReactNode
+	beforeTitle?: ReactNode
 	children: ReactNode
+	className?: string
 	title: string
 }
 
 export function AdminContentShell({
 	actions,
+	beforeTitle,
 	children,
+	className,
 	title
 }: AdminContentShellProperties) {
 	return (
-		<section className='px-4 py-7 sm:px-6 lg:px-9'>
+		<section className={cn('px-4 py-7 sm:px-6 lg:px-9', className)}>
 			<div className='mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-				<h1 className='font-bold text-3xl tracking-normal'>{title}</h1>
+				<div>
+					{beforeTitle}
+					<h1 className='font-bold text-3xl tracking-normal'>{title}</h1>
+				</div>
 				{actions}
 			</div>
 			{children}
+		</section>
+	)
+}
+
+const adminSplitShellColumns = {
+	default: 'xl:grid-cols-[minmax(0,1fr)_34rem]',
+	wide: 'xl:grid-cols-[minmax(0,1fr)_40rem]'
+} as const
+
+interface AdminSplitShellProperties {
+	actions?: ReactNode
+	children: ReactNode
+	details: ReactNode
+	detailsSize?: keyof typeof adminSplitShellColumns
+	title: string
+}
+
+export function AdminSplitShell({
+	actions,
+	children,
+	details,
+	detailsSize = 'default',
+	title
+}: AdminSplitShellProperties) {
+	return (
+		<section
+			className={cn(
+				'grid min-h-screen bg-slate-100',
+				adminSplitShellColumns[detailsSize]
+			)}
+		>
+			<AdminContentShell actions={actions} className='lg:px-7' title={title}>
+				{children}
+			</AdminContentShell>
+			<aside className='border-slate-200 border-l bg-background px-4 py-7 sm:px-6 lg:px-8'>
+				{details}
+			</aside>
 		</section>
 	)
 }

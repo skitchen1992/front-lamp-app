@@ -11,9 +11,9 @@ import {Link} from 'react-router'
 import {Head} from '@/components/Head'
 import {cn} from '@/shared/lib/utils'
 import {Input} from '@/shared/ui/input'
-import {preventFormSubmit} from './helpers'
-import {AdminLogo} from './layout'
-import {FormField} from './shared'
+import {AdminLogo} from '../_components/layout'
+import {FormField} from '../_components/shared'
+import {preventFormSubmit} from '../_lib/helpers'
 
 interface AdminAuthProperties {
 	mode: 'login' | 'register'
