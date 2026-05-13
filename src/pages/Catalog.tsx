@@ -102,8 +102,7 @@ function CatalogResults({
 				className='rounded-md border border-destructive/30 bg-background p-6 text-destructive text-sm sm:col-span-2 xl:col-span-4'
 				role='alert'
 			>
-				Не удалось загрузить товары. Проверьте доступность
-				product-management-service.
+				Не удалось загрузить товары.
 			</p>
 		)
 	}

@@ -133,8 +133,7 @@ export function ProductDetails() {
 							className='rounded-md border border-destructive/30 bg-background p-6 text-destructive text-sm'
 							role='alert'
 						>
-							Не удалось загрузить товар. Проверьте доступность
-							product-management-service.
+							Не удалось загрузить товар.
 						</p>
 					</div>
 				</main>
