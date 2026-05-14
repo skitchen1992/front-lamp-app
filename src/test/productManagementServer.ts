@@ -14,8 +14,8 @@ import {
 	productResponses
 } from './productManagementFixtures'
 
-const orderApiUrl = '*/order-management/api/v1'
-const productApiUrl = '*/product-management/api/v1'
+const orderApiUrl = '*/api/v1'
+const productApiUrl = '*/api/v1'
 
 export const productManagementHandlers = [
 	http.post(`${orderApiUrl}/cart/calculate`, async ({request}) => {

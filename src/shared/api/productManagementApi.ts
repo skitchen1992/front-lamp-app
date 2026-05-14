@@ -26,7 +26,7 @@ interface ListProductsQueryParameters {
 	status: ProductLifecycleStatus
 }
 
-const defaultProductManagementBaseUrl = `${globalThis.location.origin}/product-management`
+const defaultProductManagementBaseUrl = globalThis.location.origin
 
 export const productManagementBaseUrl = (
 	import.meta.env.VITE_PRODUCT_MANAGEMENT_API_URL ??

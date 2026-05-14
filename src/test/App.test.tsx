@@ -93,7 +93,7 @@ it('shows catalog loading, empty, and error states', async () => {
 	unmount()
 
 	productManagementServer.use(
-		http.get('*/product-management/api/v1/products', () =>
+		http.get('*/api/v1/products', () =>
 			HttpResponse.json({...productListResponse, items: [], total: 0})
 		)
 	)
@@ -104,7 +104,7 @@ it('shows catalog loading, empty, and error states', async () => {
 	emptyCatalog.unmount()
 
 	productManagementServer.use(
-		http.get('*/product-management/api/v1/products', () =>
+		http.get('*/api/v1/products', () =>
 			HttpResponse.json({detail: 'unavailable'}, {status: 500})
 		)
 	)
@@ -193,7 +193,7 @@ it('redirects empty checkout back to the cart', async () => {
 
 it('shows checkout errors when order creation fails', async () => {
 	productManagementServer.use(
-		http.post('*/order-management/api/v1/orders', () =>
+		http.post('*/api/v1/orders', () =>
 			HttpResponse.json({detail: 'unavailable'}, {status: 500})
 		)
 	)
@@ -231,7 +231,7 @@ it('shows cart calculation errors from order management', async () => {
 
 it('shows cart calculation transport errors', async () => {
 	productManagementServer.use(
-		http.post('*/order-management/api/v1/cart/calculate', () =>
+		http.post('*/api/v1/cart/calculate', () =>
 			HttpResponse.json({detail: 'unavailable'}, {status: 500})
 		)
 	)
@@ -266,7 +266,7 @@ it('shows product details loading and error states', async () => {
 	unmount()
 
 	productManagementServer.use(
-		http.get('*/product-management/api/v1/products', () =>
+		http.get('*/api/v1/products', () =>
 			HttpResponse.json({detail: 'unavailable'}, {status: 500})
 		)
 	)

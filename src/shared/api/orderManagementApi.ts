@@ -90,7 +90,7 @@ export interface OrderResponse {
 	updatedAt: string
 }
 
-const defaultOrderManagementBaseUrl = `${globalThis.location.origin}/order-management`
+const defaultOrderManagementBaseUrl = globalThis.location.origin
 
 export const orderManagementBaseUrl = (
 	import.meta.env.VITE_ORDER_MANAGEMENT_API_URL ?? defaultOrderManagementBaseUrl
