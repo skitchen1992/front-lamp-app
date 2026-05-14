@@ -6,25 +6,91 @@ import {
 	Truck,
 	UserPlus
 } from 'lucide-react'
-import type {ReactNode} from 'react'
-import {Link} from 'react-router'
+import {type FormEvent, type ReactNode, useCallback, useState} from 'react'
+import {Link, useNavigate} from 'react-router'
 import {Head} from '@/components/Head'
+import {
+	type AuthResponse,
+	adminAuthStorageKey,
+	useLoginAdminMutation,
+	useRegisterAdminMutation
+} from '@/shared/api/authApi'
 import {cn} from '@/shared/lib/utils'
+import {Button} from '@/shared/ui/Button'
 import {Input} from '@/shared/ui/input'
 import {AdminLogo} from '../_components/layout'
 import {FormField} from '../_components/shared'
-import {preventFormSubmit} from '../_lib/helpers'
 
 interface AdminAuthProperties {
 	mode: 'login' | 'register'
 }
 
+// biome-ignore lint/complexity/noExcessiveLinesPerFunction: Admin auth keeps the route form, marketing panel, and submit flow together for now.
 function AdminAuth({mode}: AdminAuthProperties) {
 	const isRegister = mode === 'register'
+	const navigate = useNavigate()
+	const [loginAdmin, loginAdminResult] = useLoginAdminMutation()
+	const [registerAdmin, registerAdminResult] = useRegisterAdminMutation()
+	const [authError, setAuthError] = useState<string | undefined>()
 	const title = isRegister ? 'Регистрация администратора' : 'Вход в админку'
 	const description = isRegister
 		? 'Создайте учетную запись для управления каталогом и заказами.'
 		: 'Авторизуйтесь, чтобы перейти к управлению магазином.'
+
+	const handleSubmit = useCallback(
+		async (event: FormEvent<HTMLFormElement>) => {
+			event.preventDefault()
+			setAuthError(undefined)
+
+			const formData = new FormData(event.currentTarget)
+			const fullName = String(formData.get('fullName') ?? '').trim()
+			const email = String(formData.get('email') ?? '').trim()
+			const password = String(formData.get('password') ?? '')
+			const passwordConfirmation = String(
+				formData.get('passwordConfirmation') ?? ''
+			)
+
+			try {
+				if (!isRegister) {
+					const auth = await loginAdmin({email, password}).unwrap()
+					storeAdminAuth(auth)
+					navigate('/admin/dashboard')
+					return
+				}
+
+				if (password !== passwordConfirmation) {
+					setAuthError('Пароли не совпадают.')
+					return
+				}
+
+				const accessToken = getStoredAdminAccessToken()
+				if (!accessToken) {
+					setAuthError(
+						'Регистрация доступна только действующему администратору. Сначала войдите в админку.'
+					)
+					return
+				}
+
+				const registerRequest = {
+					accessToken,
+					email,
+					password
+				}
+
+				if (fullName) {
+					Object.assign(registerRequest, {fullName})
+				}
+
+				const auth = await registerAdmin(registerRequest).unwrap()
+
+				storeAdminAuth(auth)
+				navigate('/admin/dashboard')
+			} catch (error) {
+				setAuthError(getAuthErrorMessage(error))
+			}
+		},
+		[isRegister, loginAdmin, navigate, registerAdmin]
+	)
 
 	return (
 		<>
@@ -41,8 +107,8 @@ function AdminAuth({mode}: AdminAuthProperties) {
 								Каталог, заказы и обращения в одном рабочем пространстве
 							</h1>
 							<p className='mt-5 text-slate-300'>
-								Пока это только верстка: формы и статусы подготовлены под
-								подключение к бэкенду на следующем шаге.
+								Рабочий доступ подключен к auth-service, чтобы команда могла
+								быстро попасть к управлению ассортиментом.
 							</p>
 						</div>
 						<div className='grid gap-3 text-slate-300 text-sm sm:grid-cols-3'>
@@ -53,7 +119,7 @@ function AdminAuth({mode}: AdminAuthProperties) {
 					</section>
 
 					<section className='flex items-center px-6 py-10 sm:px-10'>
-						<form className='w-full' onSubmit={preventFormSubmit}>
+						<form className='w-full' onSubmit={handleSubmit}>
 							<div className='mb-8'>
 								<div className='mb-5 inline-flex rounded-md border bg-slate-50 p-1'>
 									<AuthModeLink active={!isRegister} to='/admin/login'>
@@ -74,6 +140,7 @@ function AdminAuth({mode}: AdminAuthProperties) {
 											aria-label='Имя администратора'
 											autoComplete='name'
 											className='h-11'
+											name='fullName'
 											placeholder='Иван Петров'
 										/>
 									</FormField>
@@ -83,7 +150,9 @@ function AdminAuth({mode}: AdminAuthProperties) {
 										aria-label='E-mail'
 										autoComplete='email'
 										className='h-11'
+										name='email'
 										placeholder='admin@lampozavod.ru'
+										required={true}
 										type='email'
 									/>
 								</FormField>
@@ -94,7 +163,10 @@ function AdminAuth({mode}: AdminAuthProperties) {
 											isRegister ? 'new-password' : 'current-password'
 										}
 										className='h-11'
+										minLength={isRegister ? 8 : undefined}
+										name='password'
 										placeholder='Введите пароль'
+										required={true}
 										type='password'
 									/>
 								</FormField>
@@ -104,7 +176,10 @@ function AdminAuth({mode}: AdminAuthProperties) {
 											aria-label='Повторите пароль'
 											autoComplete='new-password'
 											className='h-11'
+											minLength={8}
+											name='passwordConfirmation'
 											placeholder='Повторите пароль'
+											required={true}
 											type='password'
 										/>
 									</FormField>
@@ -116,17 +191,36 @@ function AdminAuth({mode}: AdminAuthProperties) {
 								)}
 							</div>
 
-							<Link
-								className='mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-5 font-semibold text-sm text-white shadow-xs transition hover:bg-blue-700'
-								to='/admin/dashboard'
-							>
-								{isRegister ? (
+							{authError ? (
+								<p
+									className='mt-5 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-destructive text-sm'
+									role='alert'
+								>
+									{authError}
+								</p>
+							) : null}
+
+							{isRegister ? (
+								<Button
+									className='mt-6 h-11 w-full bg-blue-600 text-white hover:bg-blue-700'
+									disabled={registerAdminResult.isLoading}
+									type='submit'
+								>
 									<UserPlus aria-hidden={true} className='size-4' />
-								) : (
+									{registerAdminResult.isLoading
+										? 'Создаем аккаунт...'
+										: 'Создать аккаунт'}
+								</Button>
+							) : (
+								<Button
+									className='mt-6 h-11 w-full bg-blue-600 text-white hover:bg-blue-700'
+									disabled={loginAdminResult.isLoading}
+									type='submit'
+								>
 									<BadgeCheck aria-hidden={true} className='size-4' />
-								)}
-								{isRegister ? 'Создать аккаунт' : 'Войти'}
-							</Link>
+									{loginAdminResult.isLoading ? 'Входим...' : 'Войти'}
+								</Button>
+							)}
 							<Link
 								className='mt-3 inline-flex h-10 w-full items-center justify-center rounded-md text-slate-500 text-sm transition hover:bg-slate-50 hover:text-foreground'
 								to='/catalog'
@@ -139,6 +233,74 @@ function AdminAuth({mode}: AdminAuthProperties) {
 			</main>
 		</>
 	)
+}
+
+function storeAdminAuth(auth: AuthResponse) {
+	globalThis.localStorage.setItem(adminAuthStorageKey, JSON.stringify(auth))
+}
+
+function getStoredAdminAccessToken() {
+	try {
+		const rawAuth = globalThis.localStorage.getItem(adminAuthStorageKey)
+		if (!rawAuth) {
+			return
+		}
+
+		const auth = JSON.parse(rawAuth) as Partial<AuthResponse>
+		if (typeof auth.accessToken === 'string') {
+			return auth.accessToken
+		}
+	} catch {
+		// Treat malformed local auth state as a signed-out admin.
+	}
+}
+
+function getAuthErrorMessage(error: unknown) {
+	if (hasData(error) && isRecord(error.data)) {
+		const {detail} = error.data
+
+		if (typeof detail === 'string') {
+			if (detail === 'Bearer token is required') {
+				return 'Регистрация доступна только действующему администратору. Сначала войдите в админку.'
+			}
+
+			if (detail === 'Invalid email or password') {
+				return 'Неверный e-mail или пароль.'
+			}
+
+			return detail
+		}
+
+		if (Array.isArray(detail)) {
+			const messages = detail
+				.map(item => (hasMessage(item) ? item.msg : undefined))
+				.filter((message): message is string => typeof message === 'string')
+
+			if (messages.length > 0) {
+				return messages.join(' ')
+			}
+		}
+	}
+
+	return 'Не удалось выполнить действие. Проверьте данные и доступность auth-service.'
+}
+
+function hasData(value: unknown): value is {data: unknown} {
+	return isRecord(value) && 'data' in value
+}
+
+function hasMessage(value: unknown): value is {msg: string} {
+	if (!isRecord(value)) {
+		return false
+	}
+
+	const candidate = value as {msg?: unknown}
+
+	return typeof candidate.msg === 'string'
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null
 }
 
 function AuthModeLink({

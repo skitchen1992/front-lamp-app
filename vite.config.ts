@@ -6,6 +6,7 @@ import react from '@vitejs/plugin-react'
 import {defineConfig} from 'vite'
 
 const apiGatewayTarget = 'http://127.0.0.1:8000'
+const authProxyPaths = ['/register', '/login', '/refresh', '/logout', '/me']
 
 export default defineConfig(() => ({
 	plugins: [react(), tailwindcss()],
@@ -19,7 +20,16 @@ export default defineConfig(() => ({
 			'/api': {
 				changeOrigin: true,
 				target: apiGatewayTarget
-			}
+			},
+			...Object.fromEntries(
+				authProxyPaths.map(authPath => [
+					authPath,
+					{
+						changeOrigin: true,
+						target: apiGatewayTarget
+					}
+				])
+			)
 		}
 	},
 	test: {
