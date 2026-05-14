@@ -35,6 +35,7 @@ export const productManagementHandlers = [
 		const url = new URL(request.url)
 		const search = url.searchParams.get('query')?.trim()
 		const normalized = search?.toLowerCase() ?? ''
+		const status = url.searchParams.get('status')?.trim()
 		let items = normalized
 			? productListResponse.items.filter(
 					product =>
@@ -42,6 +43,10 @@ export const productManagementHandlers = [
 						product.sku.toLowerCase().includes(normalized)
 				)
 			: [...productListResponse.items]
+
+		if (status) {
+			items = items.filter(product => product.status === status)
+		}
 
 		const minRaw = url.searchParams.get('min_price')
 		const maxRaw = url.searchParams.get('max_price')

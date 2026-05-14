@@ -1,20 +1,65 @@
-import {Archive, ChevronDown, Pencil, Plus, Search} from 'lucide-react'
-import {Link} from 'react-router'
-import {formatPrice} from '@/shared/lib/format'
-import {cn} from '@/shared/lib/utils'
-import {Input} from '@/shared/ui/input'
-import {AdminContentShell} from '../_components/layout'
+import {Plus} from 'lucide-react'
 import {
-	ActionIconButton,
-	ActionIconLink,
-	AdminPanel,
-	StatusBadge
-} from '../_components/shared'
-import {adminCategories, adminProducts, productStatusMeta} from '../_lib/data'
-import {formControlClass, getStockTextClass} from '../_lib/helpers'
+	type ChangeEvent,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState
+} from 'react'
+import {Link} from 'react-router'
+import {
+	type CategoryResponse,
+	toProduct,
+	toProductCategories
+} from '@/entities/product/products'
+import {
+	useListCategoriesQuery,
+	useListProductsQuery
+} from '@/shared/api/productManagementApi'
+import {AdminContentShell} from '../_components/layout'
+import {AdminProductFilters} from './filters'
+import {AdminProductsTable} from './table'
+import {
+	allCategoriesValue,
+	allStatusesValue,
+	type ProductStatusFilter
+} from './types'
 
-// biome-ignore lint/complexity/noExcessiveLinesPerFunction: Таблица товаров пока является цельным mock-экраном.
+const SEARCH_DEBOUNCE_MS = 300
+const PRODUCT_LIST_LIMIT = 100
+const emptyCategories: CategoryResponse[] = []
+
 export function AdminProducts() {
+	const [query, setQuery] = useState('')
+	const [categoryId, setCategoryId] = useState(allCategoriesValue)
+	const [status, setStatus] = useState<ProductStatusFilter>(allStatusesValue)
+	const {categoryOptions, hasError, isLoading, products} = useAdminProductList({
+		categoryId,
+		query,
+		status
+	})
+
+	const handleQueryChange = useCallback(
+		(event: ChangeEvent<HTMLInputElement>) => {
+			setQuery(event.target.value)
+		},
+		[]
+	)
+
+	const handleCategoryChange = useCallback(
+		(event: ChangeEvent<HTMLSelectElement>) => {
+			setCategoryId(event.target.value)
+		},
+		[]
+	)
+
+	const handleStatusChange = useCallback(
+		(event: ChangeEvent<HTMLSelectElement>) => {
+			setStatus(event.target.value as ProductStatusFilter)
+		},
+		[]
+	)
+
 	return (
 		<AdminContentShell
 			actions={
@@ -28,138 +73,86 @@ export function AdminProducts() {
 			}
 			title='Управление товарами'
 		>
-			<div className='flex flex-col gap-3 md:flex-row'>
-				<div className='relative md:w-80'>
-					<Search
-						aria-hidden={true}
-						className='absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400'
-					/>
-					<Input
-						aria-label='Поиск по товару'
-						className='h-11 bg-background pl-10'
-						placeholder='Поиск по названию / артикулу...'
-						type='search'
-					/>
-				</div>
-				<div className='relative md:w-52'>
-					<select
-						aria-label='Категория'
-						className={cn('w-full appearance-none', formControlClass)}
-					>
-						<option>Все категории</option>
-						{adminCategories.map(category => (
-							<option key={category.id}>{category.name}</option>
-						))}
-					</select>
-					<ChevronDown
-						aria-hidden={true}
-						className='pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-slate-500'
-					/>
-				</div>
-				<div className='relative md:w-44'>
-					<select
-						aria-label='Статус товара'
-						className={cn('w-full appearance-none', formControlClass)}
-					>
-						<option>Все статусы</option>
-						<option>Активные</option>
-						<option>Черновики</option>
-						<option>Архив</option>
-					</select>
-					<ChevronDown
-						aria-hidden={true}
-						className='pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-slate-500'
-					/>
-				</div>
-			</div>
+			<AdminProductFilters
+				categoryId={categoryId}
+				categoryOptions={categoryOptions}
+				onCategoryChange={handleCategoryChange}
+				onQueryChange={handleQueryChange}
+				onStatusChange={handleStatusChange}
+				query={query}
+				status={status}
+			/>
 
-			<AdminPanel className='mt-5 overflow-hidden rounded-md'>
-				<div className='overflow-x-auto'>
-					<table className='w-full min-w-[56rem] text-sm'>
-						<thead className='bg-slate-50 text-slate-500'>
-							<tr>
-								<th className='px-4 py-3 text-left font-semibold'>Фото</th>
-								<th className='px-4 py-3 text-left font-semibold'>
-									Наименование / Артикул
-								</th>
-								<th className='px-4 py-3 text-left font-semibold'>Категория</th>
-								<th className='px-4 py-3 text-right font-semibold'>Цена</th>
-								<th className='px-4 py-3 text-right font-semibold'>Остаток</th>
-								<th className='px-4 py-3 text-left font-semibold'>Статус</th>
-								<th className='px-4 py-3 text-right font-semibold'>Действия</th>
-							</tr>
-						</thead>
-						<tbody>
-							{adminProducts.slice(0, 3).map(product => (
-								<tr
-									className={cn(
-										'border-t',
-										product.status === 'archived' && 'text-slate-400'
-									)}
-									key={product.id}
-								>
-									<td className='px-4 py-3'>
-										<img
-											alt={product.images[0].alt}
-											className='size-12 rounded-md object-cover'
-											height={48}
-											src={product.images[0].src}
-											width={48}
-										/>
-									</td>
-									<td className='px-4 py-3'>
-										<p className='font-semibold text-foreground'>
-											{product.name}
-										</p>
-										<p className='text-slate-400 text-xs italic'>
-											{product.sku}
-										</p>
-									</td>
-									<td className='px-4 py-3 text-slate-500 italic'>
-										{product.categoryName}
-									</td>
-									<td className='px-4 py-3 text-right font-bold'>
-										{formatPrice(product.price)}
-									</td>
-									<td
-										className={cn(
-											'px-4 py-3 text-right',
-											getStockTextClass(product.stockQty)
-										)}
-									>
-										{product.stockQty}
-									</td>
-									<td className='px-4 py-3'>
-										<StatusBadge {...productStatusMeta[product.status]} />
-									</td>
-									<td className='px-4 py-3'>
-										<div className='flex justify-end gap-2'>
-											<ActionIconLink
-												icon={Pencil}
-												label={`Редактировать ${product.name}`}
-												to={`/admin/products/${product.id}/edit`}
-											/>
-											{product.status === 'archived' ? (
-												<button
-													className='inline-flex h-8 items-center rounded-md px-3 font-medium text-blue-600 text-xs transition hover:bg-blue-50'
-													type='button'
-												>
-													Восстановить
-												</button>
-											) : (
-												<ActionIconButton
-													icon={Archive}
-													label={`Архивировать ${product.name}`}
-												/>
-											)}
-										</div>
-									</td>
-								</tr>
-							))}
-						</tbody>
-					</table>
-				</div>
-			</AdminPanel>
+			<AdminProductsTable
+				hasError={hasError}
+				isLoading={isLoading}
+				products={products}
+			/>
 		</AdminContentShell>
 	)
+}
+
+interface AdminProductListParameters {
+	categoryId: string
+	query: string
+	status: ProductStatusFilter
+}
+
+function useAdminProductList({
+	categoryId,
+	query,
+	status
+}: AdminProductListParameters) {
+	const debouncedQuery = useDebouncedQuery(query)
+	const categoriesQuery = useListCategoriesQuery()
+	const productStatus = status === allStatusesValue ? undefined : status
+	const productsQuery = useListProductsQuery({
+		limit: PRODUCT_LIST_LIMIT,
+		page: 1,
+		...(productStatus === undefined ? {} : {status: productStatus}),
+		...(debouncedQuery.length === 0 ? {} : {query: debouncedQuery})
+	})
+	const categoryData = categoriesQuery.data ?? emptyCategories
+	const categoryOptions = useMemo(
+		() => toProductCategories(categoryData),
+		[categoryData]
+	)
+	const products = useMemo(
+		() =>
+			(productsQuery.data?.items ?? []).map(product =>
+				toProduct(product, categoryData)
+			),
+		[categoryData, productsQuery.data?.items]
+	)
+	const visibleProducts = useMemo(
+		() =>
+			products.filter(
+				product =>
+					categoryId === allCategoriesValue || product.categoryId === categoryId
+			),
+		[categoryId, products]
+	)
+
+	return {
+		categoryOptions,
+		hasError: categoriesQuery.isError || productsQuery.isError,
+		isLoading: categoriesQuery.isLoading || productsQuery.isLoading,
+		products: visibleProducts
+	}
+}
+
+function useDebouncedQuery(query: string) {
+	const [debouncedQuery, setDebouncedQuery] = useState('')
+
+	useEffect(() => {
+		const handle = globalThis.setTimeout(() => {
+			setDebouncedQuery(query.trim())
+		}, SEARCH_DEBOUNCE_MS)
+
+		return () => {
+			globalThis.clearTimeout(handle)
+		}
+	}, [query])
+
+	return debouncedQuery
 }

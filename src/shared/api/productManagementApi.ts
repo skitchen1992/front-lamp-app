@@ -12,18 +12,16 @@ interface ListProductsParameters {
 	query?: string
 	minPrice?: number
 	maxPrice?: number
-	status: ProductLifecycleStatus
+	status?: ProductLifecycleStatus
 }
 
 interface ListProductsQueryParameters {
 	limit: number
-	// biome-ignore lint/style/useNamingConvention: Внешний API ожидает snake_case query-параметр.
 	max_price?: number
-	// biome-ignore lint/style/useNamingConvention: Внешний API ожидает snake_case query-параметр.
 	min_price?: number
 	page: number
 	query?: string
-	status: ProductLifecycleStatus
+	status?: ProductLifecycleStatus
 }
 
 const defaultProductManagementBaseUrl = globalThis.location.origin
@@ -53,7 +51,10 @@ export const productManagementApi = createApi({
 				minPrice,
 				maxPrice
 			}) => {
-				const params: ListProductsQueryParameters = {limit, page, status}
+				const params: ListProductsQueryParameters = {limit, page}
+				if (status !== undefined) {
+					params.status = status
+				}
 				if (searchQuery !== undefined) {
 					params.query = searchQuery
 				}
