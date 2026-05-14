@@ -1,13 +1,24 @@
 import {
 	LayoutDashboard,
+	LogOut,
 	MessageSquare,
 	Package,
 	ShoppingBag,
 	Zap
 } from 'lucide-react'
-import type {ReactNode} from 'react'
-import {Link, NavLink, Outlet} from 'react-router'
+import {type ReactNode, useCallback} from 'react'
+import {Link, NavLink, Outlet, useNavigate} from 'react-router'
+import {useAppDispatch} from '@/app/store/hooks'
 import {Head} from '@/components/Head'
+import {
+	authApi,
+	clearStoredAdminAuth,
+	getStoredAdminAccessToken,
+	getStoredAdminAuth,
+	useLogoutAdminMutation
+} from '@/shared/api/authApi'
+import {orderManagementApi} from '@/shared/api/orderManagementApi'
+import {productManagementApi} from '@/shared/api/productManagementApi'
 import {cn} from '@/shared/lib/utils'
 
 const adminNavigationItems = [
@@ -32,6 +43,8 @@ const adminNavigationItems = [
 		to: '/admin/inquiries'
 	}
 ]
+
+const whitespacePattern = /\s+/u
 
 function getAdminNavLinkClass({isActive}: {isActive: boolean}) {
 	return cn(
@@ -61,8 +74,35 @@ export function AdminLogo({compact = false}: {compact?: boolean}) {
 }
 
 function AdminSidebar() {
+	const dispatch = useAppDispatch()
+	const navigate = useNavigate()
+	const [logoutAdmin] = useLogoutAdminMutation()
+
+	const handleLogout = useCallback(async () => {
+		const {refreshToken} = getStoredAdminAuth() ?? {}
+		const accessToken = getStoredAdminAccessToken()
+
+		try {
+			if (
+				accessToken &&
+				typeof refreshToken === 'string' &&
+				refreshToken.trim()
+			) {
+				await logoutAdmin({accessToken, refreshToken}).unwrap()
+			}
+		} catch {
+			// Local logout must still succeed when auth-service is unavailable.
+		} finally {
+			clearStoredAdminAuth()
+			dispatch(authApi.util.resetApiState())
+			dispatch(productManagementApi.util.resetApiState())
+			dispatch(orderManagementApi.util.resetApiState())
+			navigate('/admin/login', {replace: true})
+		}
+	}, [dispatch, logoutAdmin, navigate])
+
 	return (
-		<aside className='border-slate-800 border-r bg-[#17191d] text-white lg:min-h-screen'>
+		<aside className='flex flex-col border-slate-800 border-r bg-[#17191d] text-white lg:min-h-screen'>
 			<div className='flex h-14 items-center border-slate-700 border-b px-5'>
 				<AdminLogo />
 			</div>
@@ -83,6 +123,17 @@ function AdminSidebar() {
 					))}
 				</div>
 			</nav>
+			<div className='mt-auto border-slate-800 border-t p-3'>
+				<button
+					aria-label='Выйти из админки'
+					className='flex h-11 w-full items-center gap-3 rounded-md px-3 font-medium text-slate-400 text-sm transition hover:bg-white/5 hover:text-white'
+					onClick={handleLogout}
+					type='button'
+				>
+					<LogOut aria-hidden={true} className='size-4' />
+					Выйти
+				</button>
+			</div>
 		</aside>
 	)
 }
@@ -166,14 +217,32 @@ export function AdminSplitShell({
 }
 
 export function AdminUserBadge() {
+	const adminName = getAdminDisplayName()
+	const initials = getAdminInitials(adminName)
+
 	return (
 		<div className='flex items-center gap-3 text-slate-500'>
-			<span className='hidden font-medium text-sm sm:inline'>
-				Администратор
-			</span>
+			<span className='hidden font-medium text-sm sm:inline'>{adminName}</span>
 			<div className='flex size-10 items-center justify-center rounded-full bg-blue-600 font-semibold text-white'>
-				А
+				{initials}
 			</div>
 		</div>
 	)
+}
+
+function getAdminDisplayName() {
+	const storedAuth = getStoredAdminAuth()
+	const fullName = storedAuth?.user?.fullName?.trim()
+	const email = storedAuth?.user?.email?.trim()
+
+	return fullName || email || 'Администратор'
+}
+
+function getAdminInitials(name: string) {
+	const [firstPart, secondPart] = name
+		.split(whitespacePattern)
+		.filter(Boolean)
+		.map(part => part[0]?.toLocaleUpperCase('ru-RU') ?? '')
+
+	return `${firstPart ?? 'А'}${secondPart ?? ''}`
 }

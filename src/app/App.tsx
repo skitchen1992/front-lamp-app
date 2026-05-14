@@ -1,4 +1,4 @@
-import {Navigate, Route, Routes} from 'react-router'
+import {Navigate, Outlet, Route, Routes, useLocation} from 'react-router'
 import {AdminLayout} from '@/pages/admin/_components/layout'
 import {AdminLogin, AdminRegister} from '@/pages/admin/auth'
 import {AdminDashboard} from '@/pages/admin/dashboard'
@@ -11,6 +11,7 @@ import {Catalog} from '@/pages/catalog'
 import {Checkout} from '@/pages/checkout'
 import {OrderConfirmation} from '@/pages/order-confirmation'
 import {ProductDetails} from '@/pages/product-details'
+import {getStoredAdminAccessToken} from '@/shared/api/authApi'
 
 export function App() {
 	return (
@@ -18,20 +19,22 @@ export function App() {
 			<Route element={<Navigate replace={true} to='/catalog' />} index={true} />
 			<Route element={<AdminLogin />} path='admin/login' />
 			<Route element={<AdminRegister />} path='admin/register' />
-			<Route element={<AdminLayout />} path='admin'>
-				<Route
-					element={<Navigate replace={true} to='/admin/dashboard' />}
-					index={true}
-				/>
-				<Route element={<AdminDashboard />} path='dashboard' />
-				<Route element={<AdminProducts />} path='products' />
-				<Route element={<AdminProductEditor />} path='products/new' />
-				<Route
-					element={<AdminProductEditor />}
-					path='products/:productId/edit'
-				/>
-				<Route element={<AdminOrders />} path='orders' />
-				<Route element={<AdminInquiries />} path='inquiries' />
+			<Route element={<RequireAdminAuth />}>
+				<Route element={<AdminLayout />} path='admin'>
+					<Route
+						element={<Navigate replace={true} to='/admin/dashboard' />}
+						index={true}
+					/>
+					<Route element={<AdminDashboard />} path='dashboard' />
+					<Route element={<AdminProducts />} path='products' />
+					<Route element={<AdminProductEditor />} path='products/new' />
+					<Route
+						element={<AdminProductEditor />}
+						path='products/:productId/edit'
+					/>
+					<Route element={<AdminOrders />} path='orders' />
+					<Route element={<AdminInquiries />} path='inquiries' />
+				</Route>
 			</Route>
 			<Route element={<Catalog />} path='catalog' />
 			<Route element={<ProductDetails />} path='products/:productSlug' />
@@ -41,4 +44,20 @@ export function App() {
 			<Route element={<Navigate replace={true} to='/catalog' />} path='*' />
 		</Routes>
 	)
+}
+
+function RequireAdminAuth() {
+	const location = useLocation()
+
+	if (!getStoredAdminAccessToken()) {
+		return (
+			<Navigate
+				replace={true}
+				state={{from: location.pathname}}
+				to='/admin/login'
+			/>
+		)
+	}
+
+	return <Outlet />
 }

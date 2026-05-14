@@ -8,6 +8,7 @@ beforeAll(() => {
 
 afterEach(() => {
 	productManagementServer.resetHandlers()
+	globalThis.localStorage.clear()
 })
 
 afterAll(() => {

@@ -10,8 +10,7 @@ import {type FormEvent, type ReactNode, useCallback, useState} from 'react'
 import {Link, useNavigate} from 'react-router'
 import {Head} from '@/components/Head'
 import {
-	type AuthResponse,
-	adminAuthStorageKey,
+	getStoredAdminAccessToken,
 	useLoginAdminMutation,
 	useRegisterAdminMutation
 } from '@/shared/api/authApi'
@@ -52,8 +51,7 @@ function AdminAuth({mode}: AdminAuthProperties) {
 
 			try {
 				if (!isRegister) {
-					const auth = await loginAdmin({email, password}).unwrap()
-					storeAdminAuth(auth)
+					await loginAdmin({email, password}).unwrap()
 					navigate('/admin/dashboard')
 					return
 				}
@@ -81,9 +79,7 @@ function AdminAuth({mode}: AdminAuthProperties) {
 					Object.assign(registerRequest, {fullName})
 				}
 
-				const auth = await registerAdmin(registerRequest).unwrap()
-
-				storeAdminAuth(auth)
+				await registerAdmin(registerRequest).unwrap()
 				navigate('/admin/dashboard')
 			} catch (error) {
 				setAuthError(getAuthErrorMessage(error))
@@ -233,26 +229,6 @@ function AdminAuth({mode}: AdminAuthProperties) {
 			</main>
 		</>
 	)
-}
-
-function storeAdminAuth(auth: AuthResponse) {
-	globalThis.localStorage.setItem(adminAuthStorageKey, JSON.stringify(auth))
-}
-
-function getStoredAdminAccessToken() {
-	try {
-		const rawAuth = globalThis.localStorage.getItem(adminAuthStorageKey)
-		if (!rawAuth) {
-			return
-		}
-
-		const auth = JSON.parse(rawAuth) as Partial<AuthResponse>
-		if (typeof auth.accessToken === 'string') {
-			return auth.accessToken
-		}
-	} catch {
-		// Treat malformed local auth state as a signed-out admin.
-	}
 }
 
 function getAuthErrorMessage(error: unknown) {

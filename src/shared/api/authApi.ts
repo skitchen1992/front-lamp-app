@@ -15,6 +15,11 @@ export interface LoginRequest {
 	password: string
 }
 
+export interface LogoutRequest {
+	accessToken: string
+	refreshToken: string
+}
+
 export interface UserResponse {
 	createdAt: string
 	email: string
@@ -34,6 +39,50 @@ export interface AuthResponse {
 
 export const adminAuthStorageKey = 'lampozavod.admin.auth'
 
+export function storeAdminAuth(auth: AuthResponse) {
+	globalThis.localStorage.setItem(adminAuthStorageKey, JSON.stringify(auth))
+}
+
+export function clearStoredAdminAuth() {
+	globalThis.localStorage.removeItem(adminAuthStorageKey)
+}
+
+export function getStoredAdminAuth(): Partial<AuthResponse> | undefined {
+	let storedAuth: Partial<AuthResponse> | undefined
+
+	try {
+		const rawAuth = globalThis.localStorage.getItem(adminAuthStorageKey)
+		if (!rawAuth) {
+			return storedAuth
+		}
+
+		const auth = JSON.parse(rawAuth)
+		if (isRecord(auth)) {
+			storedAuth = auth as Partial<AuthResponse>
+		}
+	} catch {
+		clearStoredAdminAuth()
+	}
+
+	return storedAuth
+}
+
+export function getStoredAdminAccessToken(): string | undefined {
+	const auth = getStoredAdminAuth()
+	const {accessToken: storedAccessToken} = auth ?? {}
+	let accessToken: string | undefined
+
+	if (typeof storedAccessToken === 'string' && storedAccessToken.trim()) {
+		accessToken = storedAccessToken
+	}
+
+	return accessToken
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null
+}
+
 const defaultAuthBaseUrl = globalThis.location.origin
 
 export const authBaseUrl = (
@@ -46,13 +95,39 @@ export const authApi = createApi({
 	}),
 	endpoints: builder => ({
 		loginAdmin: builder.mutation<AuthResponse, LoginRequest>({
+			async onQueryStarted(_, {queryFulfilled}) {
+				try {
+					const {data} = await queryFulfilled
+					storeAdminAuth(data)
+				} catch {
+					// Failed login attempts must not mutate the stored admin session.
+				}
+			},
 			query: request => ({
 				body: request,
 				method: 'POST',
 				url: '/login'
 			})
 		}),
+		logoutAdmin: builder.mutation<void, LogoutRequest>({
+			query: ({accessToken, refreshToken}) => ({
+				body: {refreshToken},
+				headers: {
+					authorization: `Bearer ${accessToken}`
+				},
+				method: 'POST',
+				url: '/logout'
+			})
+		}),
 		registerAdmin: builder.mutation<AuthResponse, RegisterAdminRequest>({
+			async onQueryStarted(_, {queryFulfilled}) {
+				try {
+					const {data} = await queryFulfilled
+					storeAdminAuth(data)
+				} catch {
+					// Keep the previous session if admin registration fails.
+				}
+			},
 			query: ({accessToken, ...request}) => ({
 				body: request,
 				headers: {
@@ -66,4 +141,8 @@ export const authApi = createApi({
 	reducerPath: 'authApi'
 })
 
-export const {useLoginAdminMutation, useRegisterAdminMutation} = authApi
+export const {
+	useLoginAdminMutation,
+	useLogoutAdminMutation,
+	useRegisterAdminMutation
+} = authApi
