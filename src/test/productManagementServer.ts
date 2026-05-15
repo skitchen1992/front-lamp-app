@@ -2,10 +2,13 @@ import {HttpResponse, http} from 'msw'
 import {setupServer} from 'msw/node'
 import type {
 	CartCalculationRequest,
-	CreateOrderRequest
+	CreateOrderRequest,
+	UpdateOrderStatusRequest
 } from '@/shared/api/orderManagementApi'
 import {
+	adminOrderResponses,
 	createCartCalculationResponse,
+	createOrderListResponse,
 	createOrderResponse
 } from './orderManagementFixtures'
 import {
@@ -28,6 +31,39 @@ export const productManagementHandlers = [
 
 		return HttpResponse.json(createOrderResponse(orderRequest), {status: 201})
 	}),
+	http.get(`${orderApiUrl}/orders/:orderId`, ({params}) => {
+		const {orderId} = params
+		const order = adminOrderResponses.find(item => item.id === orderId)
+
+		return order
+			? HttpResponse.json(order)
+			: HttpResponse.json({detail: 'Order not found'}, {status: 404})
+	}),
+	http.get(`${orderApiUrl}/internal/orders`, ({request}) => {
+		const url = new URL(request.url)
+		const status = url.searchParams.get('status')?.trim()
+		const orders = status
+			? adminOrderResponses.filter(order => order.status === status)
+			: adminOrderResponses
+
+		return HttpResponse.json(createOrderListResponse(orders))
+	}),
+	http.patch(
+		`${orderApiUrl}/internal/orders/:orderId/status`,
+		async ({params, request}) => {
+			const {orderId} = params
+			const requestBody = (await request.json()) as UpdateOrderStatusRequest
+			const order = adminOrderResponses.find(item => item.id === orderId)
+
+			return order
+				? HttpResponse.json({
+						...order,
+						status: requestBody.status,
+						updatedAt: '2026-05-15T12:30:00.000Z'
+					})
+				: HttpResponse.json({detail: 'Order not found'}, {status: 404})
+		}
+	),
 	http.get(`${productApiUrl}/categories`, () =>
 		HttpResponse.json(categoryResponses)
 	),

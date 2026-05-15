@@ -1,4 +1,5 @@
 import {createApi, fetchBaseQuery} from '@reduxjs/toolkit/query/react'
+import {getStoredAdminAccessToken} from './authApi'
 
 export type DeliveryType = 'delivery' | 'pickup'
 
@@ -90,6 +91,42 @@ export interface OrderResponse {
 	updatedAt: string
 }
 
+export interface OrderSummaryResponse {
+	companyName?: null | string | undefined
+	createdAt: string
+	customerName: string
+	email: string
+	id: string
+	orderNumber: string
+	phone: string
+	status: OrderStatus
+	totalAmount: string
+	updatedAt: string
+}
+
+export interface OrderListResponse {
+	items: OrderSummaryResponse[]
+	limit: number
+	page: number
+	total: number
+}
+
+export interface ListOrdersParameters {
+	limit: number
+	page: number
+	status?: OrderStatus
+}
+
+export interface UpdateOrderStatusRequest {
+	comment?: null | string
+	status: OrderStatus
+}
+
+export interface UpdateOrderStatusMutationRequest
+	extends UpdateOrderStatusRequest {
+	orderId: string
+}
+
 const defaultOrderManagementBaseUrl = globalThis.location.origin
 
 export const orderManagementBaseUrl = (
@@ -98,7 +135,15 @@ export const orderManagementBaseUrl = (
 
 export const orderManagementApi = createApi({
 	baseQuery: fetchBaseQuery({
-		baseUrl: orderManagementBaseUrl
+		baseUrl: orderManagementBaseUrl,
+		prepareHeaders: headers => {
+			const accessToken = getStoredAdminAccessToken()
+			if (accessToken) {
+				headers.set('authorization', `Bearer ${accessToken}`)
+			}
+
+			return headers
+		}
 	}),
 	endpoints: builder => ({
 		calculateCart: builder.query<
@@ -117,10 +162,59 @@ export const orderManagementApi = createApi({
 				method: 'POST',
 				url: '/api/v1/orders'
 			})
+		}),
+		getOrder: builder.query<OrderResponse, string>({
+			providesTags: (_result, _error, orderId) => [
+				{id: orderId, type: 'Order'}
+			],
+			query: orderId => `/api/v1/orders/${orderId}`
+		}),
+		listOrders: builder.query<OrderListResponse, ListOrdersParameters>({
+			providesTags: result =>
+				result
+					? [
+							...result.items.map(order => ({
+								id: order.id,
+								type: 'Order' as const
+							})),
+							{id: 'LIST', type: 'Order'}
+						]
+					: [{id: 'LIST', type: 'Order'}],
+			query: ({limit, page, status}) => ({
+				params: {
+					limit,
+					page,
+					...(status === undefined ? {} : {status})
+				},
+				url: '/api/v1/internal/orders'
+			})
+		}),
+		updateOrderStatus: builder.mutation<
+			OrderResponse,
+			UpdateOrderStatusMutationRequest
+		>({
+			invalidatesTags: (_result, _error, {orderId}) => [
+				{id: orderId, type: 'Order'},
+				{id: 'LIST', type: 'Order'}
+			],
+			query: ({comment, orderId, status}) => ({
+				body: {
+					...(comment === undefined ? {} : {comment}),
+					status
+				},
+				method: 'PATCH',
+				url: `/api/v1/internal/orders/${orderId}/status`
+			})
 		})
 	}),
-	reducerPath: 'orderManagementApi'
+	reducerPath: 'orderManagementApi',
+	tagTypes: ['Order']
 })
 
-export const {useCalculateCartQuery, useCreateOrderMutation} =
-	orderManagementApi
+export const {
+	useCalculateCartQuery,
+	useCreateOrderMutation,
+	useGetOrderQuery,
+	useListOrdersQuery,
+	useUpdateOrderStatusMutation
+} = orderManagementApi
