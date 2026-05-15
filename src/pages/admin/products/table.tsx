@@ -1,5 +1,5 @@
-import {Archive, Pencil} from 'lucide-react'
-import type {ReactNode} from 'react'
+import {Pencil, RotateCcw, Trash2} from 'lucide-react'
+import {type ReactNode, useCallback} from 'react'
 import type {Product} from '@/entities/product/products'
 import {formatPrice} from '@/shared/lib/format'
 import {cn} from '@/shared/lib/utils'
@@ -13,14 +13,20 @@ import {productStatusMeta} from '../_lib/data'
 import {getStockTextClass} from '../_lib/helpers'
 
 interface AdminProductsTableProperties {
+	busyProductId: string | undefined
 	hasError: boolean
 	isLoading: boolean
+	onDeleteProduct: (product: Product) => void
+	onRestoreProduct: (product: Product) => void
 	products: Product[]
 }
 
 export function AdminProductsTable({
+	busyProductId,
 	hasError,
 	isLoading,
+	onDeleteProduct,
+	onRestoreProduct,
 	products
 }: AdminProductsTableProperties) {
 	if (isLoading) {
@@ -44,7 +50,12 @@ export function AdminProductsTable({
 			<div className='overflow-x-auto'>
 				<table className='w-full min-w-[56rem] text-sm'>
 					<AdminProductsTableHead />
-					<AdminProductsTableBody products={products} />
+					<AdminProductsTableBody
+						busyProductId={busyProductId}
+						onDeleteProduct={onDeleteProduct}
+						onRestoreProduct={onRestoreProduct}
+						products={products}
+					/>
 				</table>
 			</div>
 		</AdminPanel>
@@ -90,7 +101,17 @@ function AdminProductsTableHead() {
 	)
 }
 
-function AdminProductsTableBody({products}: {products: Product[]}) {
+function AdminProductsTableBody({
+	busyProductId,
+	onDeleteProduct,
+	onRestoreProduct,
+	products
+}: {
+	busyProductId: string | undefined
+	onDeleteProduct: (product: Product) => void
+	onRestoreProduct: (product: Product) => void
+	products: Product[]
+}) {
 	return (
 		<tbody>
 			{products.length === 0 ? (
@@ -101,14 +122,30 @@ function AdminProductsTableBody({products}: {products: Product[]}) {
 				</tr>
 			) : (
 				products.map(product => (
-					<AdminProductRow key={product.id} product={product} />
+					<AdminProductRow
+						isBusy={busyProductId === product.id}
+						key={product.id}
+						onDeleteProduct={onDeleteProduct}
+						onRestoreProduct={onRestoreProduct}
+						product={product}
+					/>
 				))
 			)}
 		</tbody>
 	)
 }
 
-function AdminProductRow({product}: {product: Product}) {
+function AdminProductRow({
+	isBusy,
+	onDeleteProduct,
+	onRestoreProduct,
+	product
+}: {
+	isBusy: boolean
+	onDeleteProduct: (product: Product) => void
+	onRestoreProduct: (product: Product) => void
+	product: Product
+}) {
 	return (
 		<tr
 			className={cn(
@@ -137,7 +174,12 @@ function AdminProductRow({product}: {product: Product}) {
 				<StatusBadge {...productStatusMeta[product.apiStatus]} />
 			</td>
 			<td className='px-4 py-3'>
-				<ProductActionCell product={product} />
+				<ProductActionCell
+					isBusy={isBusy}
+					onDeleteProduct={onDeleteProduct}
+					onRestoreProduct={onRestoreProduct}
+					product={product}
+				/>
 			</td>
 		</tr>
 	)
@@ -164,7 +206,24 @@ function ProductNameCell({product}: {product: Product}) {
 	)
 }
 
-function ProductActionCell({product}: {product: Product}) {
+function ProductActionCell({
+	isBusy,
+	onDeleteProduct,
+	onRestoreProduct,
+	product
+}: {
+	isBusy: boolean
+	onDeleteProduct: (product: Product) => void
+	onRestoreProduct: (product: Product) => void
+	product: Product
+}) {
+	const handleDeleteProduct = useCallback(() => {
+		onDeleteProduct(product)
+	}, [onDeleteProduct, product])
+	const handleRestoreProduct = useCallback(() => {
+		onRestoreProduct(product)
+	}, [onRestoreProduct, product])
+
 	return (
 		<div className='flex justify-end gap-2'>
 			<ActionIconLink
@@ -175,14 +234,19 @@ function ProductActionCell({product}: {product: Product}) {
 			{product.apiStatus === 'archived' ? (
 				<button
 					className='inline-flex h-8 items-center rounded-md px-3 font-medium text-blue-600 text-xs transition hover:bg-blue-50'
+					disabled={isBusy}
+					onClick={handleRestoreProduct}
 					type='button'
 				>
+					<RotateCcw aria-hidden={true} className='mr-1 size-3.5' />
 					Восстановить
 				</button>
 			) : (
 				<ActionIconButton
-					icon={Archive}
-					label={`Архивировать ${product.name}`}
+					disabled={isBusy}
+					icon={Trash2}
+					label={`Удалить ${product.name}`}
+					onClick={handleDeleteProduct}
 				/>
 			)}
 		</div>

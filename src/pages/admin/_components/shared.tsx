@@ -1,5 +1,5 @@
 import type {LucideIcon} from 'lucide-react'
-import type {ReactNode} from 'react'
+import type {ButtonHTMLAttributes, ReactNode} from 'react'
 import {Link} from 'react-router'
 import {cn} from '@/shared/lib/utils'
 import type {StatusMeta} from '../_lib/data'
@@ -57,12 +57,27 @@ export function ActionIconLink({
 	)
 }
 
-export function ActionIconButton({icon: Icon, label}: ActionIconProperties) {
+interface ActionIconButtonProperties
+	extends ActionIconProperties,
+		ButtonHTMLAttributes<HTMLButtonElement> {
+	className?: string
+}
+
+export function ActionIconButton({
+	className,
+	icon: Icon,
+	label,
+	...properties
+}: ActionIconButtonProperties) {
 	return (
 		<button
 			aria-label={label}
-			className='inline-flex size-8 items-center justify-center rounded-md bg-slate-100 text-slate-500 transition hover:bg-red-50 hover:text-red-600'
+			className={cn(
+				'inline-flex size-8 items-center justify-center rounded-md bg-slate-100 text-slate-500 transition hover:bg-red-50 hover:text-red-600 disabled:pointer-events-none disabled:opacity-50',
+				className
+			)}
 			type='button'
+			{...properties}
 		>
 			<Icon aria-hidden={true} className='size-4' />
 		</button>

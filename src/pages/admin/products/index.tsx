@@ -9,12 +9,15 @@ import {
 import {Link} from 'react-router'
 import {
 	type CategoryResponse,
+	type Product,
 	toProduct,
 	toProductCategories
 } from '@/entities/product/products'
 import {
+	useDeleteProductMutation,
 	useListCategoriesQuery,
-	useListProductsQuery
+	useListProductsQuery,
+	useUpdateProductStatusMutation
 } from '@/shared/api/productManagementApi'
 import {AdminContentShell} from '../_components/layout'
 import {AdminProductFilters} from './filters'
@@ -29,10 +32,15 @@ const SEARCH_DEBOUNCE_MS = 300
 const PRODUCT_LIST_LIMIT = 100
 const emptyCategories: CategoryResponse[] = []
 
+// biome-ignore lint/complexity/noExcessiveLinesPerFunction: The admin list owns filters plus product action callbacks.
 export function AdminProducts() {
 	const [query, setQuery] = useState('')
 	const [categoryId, setCategoryId] = useState(allCategoriesValue)
 	const [status, setStatus] = useState<ProductStatusFilter>(allStatusesValue)
+	const [actionError, setActionError] = useState<string | undefined>()
+	const [busyProductId, setBusyProductId] = useState<string | undefined>()
+	const [deleteProduct] = useDeleteProductMutation()
+	const [updateProductStatus] = useUpdateProductStatusMutation()
 	const {categoryOptions, hasError, isLoading, products} = useAdminProductList({
 		categoryId,
 		query,
@@ -60,6 +68,52 @@ export function AdminProducts() {
 		[]
 	)
 
+	const handleDeleteProduct = useCallback(
+		async (product: Product) => {
+			const confirmed =
+				typeof globalThis.confirm === 'function'
+					? // biome-ignore lint/suspicious/noAlert: Native confirmation keeps destructive table action explicit.
+						globalThis.confirm(
+							`Удалить товар «${product.name}»? Он будет перемещен в архив.`
+						)
+					: true
+			if (!confirmed) {
+				return
+			}
+
+			setActionError(undefined)
+			setBusyProductId(product.id)
+
+			try {
+				await deleteProduct(product.id).unwrap()
+			} catch (error) {
+				setActionError(getProductActionErrorMessage(error, 'delete'))
+			} finally {
+				setBusyProductId(undefined)
+			}
+		},
+		[deleteProduct]
+	)
+
+	const handleRestoreProduct = useCallback(
+		async (product: Product) => {
+			setActionError(undefined)
+			setBusyProductId(product.id)
+
+			try {
+				await updateProductStatus({
+					productId: product.id,
+					status: 'active'
+				}).unwrap()
+			} catch (error) {
+				setActionError(getProductActionErrorMessage(error, 'restore'))
+			} finally {
+				setBusyProductId(undefined)
+			}
+		},
+		[updateProductStatus]
+	)
+
 	return (
 		<AdminContentShell
 			actions={
@@ -83,9 +137,21 @@ export function AdminProducts() {
 				status={status}
 			/>
 
+			{actionError ? (
+				<p
+					className='mt-5 rounded-md border border-red-200 bg-red-50 p-3 text-red-600 text-sm'
+					role='alert'
+				>
+					{actionError}
+				</p>
+			) : null}
+
 			<AdminProductsTable
+				busyProductId={busyProductId}
 				hasError={hasError}
 				isLoading={isLoading}
+				onDeleteProduct={handleDeleteProduct}
+				onRestoreProduct={handleRestoreProduct}
 				products={products}
 			/>
 		</AdminContentShell>
@@ -155,4 +221,31 @@ function useDebouncedQuery(query: string) {
 	}, [query])
 
 	return debouncedQuery
+}
+
+function getProductActionErrorMessage(
+	error: unknown,
+	action: 'delete' | 'restore'
+) {
+	if (isFetchBaseQueryError(error)) {
+		if (error.status === 401) {
+			return 'Сессия администратора истекла. Войдите в админку заново.'
+		}
+		if (error.status === 404) {
+			return 'Товар не найден на сервере.'
+		}
+		if (error.status === 422) {
+			return 'Сервер не принял запрос по этому товару.'
+		}
+	}
+
+	return action === 'delete'
+		? 'Не удалось удалить товар. Попробуйте еще раз.'
+		: 'Не удалось восстановить товар. Попробуйте еще раз.'
+}
+
+function isFetchBaseQueryError(
+	error: unknown
+): error is {status: number | string} {
+	return typeof error === 'object' && error !== null && 'status' in error
 }
