@@ -1,14 +1,14 @@
-import {Search, ShoppingCart} from 'lucide-react'
+import {ShoppingCart} from 'lucide-react'
 import {Link} from 'react-router'
-import {selectCartLineCount} from '@/store/cartSlice'
-import {useAppSelector} from '@/store/hooks'
+import {useAppSelector} from '@/app/store/hooks'
+import {selectCartLineCount} from '@/features/cart/cartSlice'
 import {BrandLogo} from './BrandLogo'
 
 const navigationItems = [
-	{label: 'Каталог', to: '/catalog'},
-	{label: 'О заводе', to: '/catalog#about'},
-	{label: 'Доставка', to: '/catalog#delivery'},
-	{label: 'Контакты', to: '/catalog#contacts'}
+	{label: 'Каталог', to: '/catalog'}
+	// {label: 'О заводе', to: '/catalog#about'},
+	// {label: 'Доставка', to: '/catalog#delivery'},
+	// {label: 'Контакты', to: '/catalog#contacts'}
 ]
 
 export function StoreHeader() {
@@ -29,12 +29,9 @@ export function StoreHeader() {
 						</Link>
 					))}
 				</nav>
-				<div className='ml-auto hidden h-9 min-w-64 items-center gap-2 rounded-md border bg-muted px-3 text-muted-foreground lg:flex'>
-					<Search aria-hidden={true} className='size-4' />
-					<span className='text-sm'>Поиск товаров...</span>
-				</div>
+
 				<Link
-					className='inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-4 font-medium text-primary-foreground text-sm shadow-xs transition hover:bg-primary/90'
+					className='ml-auto inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-4 font-medium text-primary-foreground text-sm shadow-xs transition hover:bg-primary/90'
 					to='/cart'
 				>
 					<ShoppingCart aria-hidden={true} className='size-4' />

@@ -1,24 +1,20 @@
 import {type APIRequestContext, expect, test} from '@playwright/test'
-import type {
-	ProductListResponse,
-	ProductSummaryResponse
-} from '../src/data/products'
 
 const CHECKOUT_LINK_NAME = /Оформить заказ/u
 
 async function getLiveProduct(request: APIRequestContext) {
 	const response = await request.get(
-		'/product-management/api/v1/products?limit=100&page=1&status=active'
+		'/api/v1/products?limit=100&page=1&status=active'
 	)
 	expect(response.ok()).toBe(true)
 
-	const products = (await response.json()) as ProductListResponse
+	const products = await response.json()
 	expect(products.items.length).toBeGreaterThan(0)
 
 	const [product] = products.items
 	expect(product).toBeDefined()
 
-	return product as ProductSummaryResponse
+	return product
 }
 
 test('renders the live lamp catalog and opens one product', async ({

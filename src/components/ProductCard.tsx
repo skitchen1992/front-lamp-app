@@ -1,12 +1,12 @@
 import {Plus} from 'lucide-react'
 import {useCallback} from 'react'
 import {Link} from 'react-router'
-import type {Product} from '@/data/products'
-import {formatPrice} from '@/lib/format'
-import {addToCart} from '@/store/cartSlice'
-import {useAppDispatch} from '@/store/hooks'
-import {Badge} from './ui/Badge'
-import {Button} from './ui/Button'
+import {useAppDispatch} from '@/app/store/hooks'
+import type {Product} from '@/entities/product/products'
+import {addToCart} from '@/features/cart/cartSlice'
+import {formatPrice} from '@/shared/lib/format'
+import {Badge} from '@/shared/ui/Badge'
+import {Button} from '@/shared/ui/Button'
 
 interface ProductCardProperties {
 	product: Product
@@ -19,7 +19,7 @@ export function ProductCard({product}: ProductCardProperties) {
 
 	const handleAddToCart = useCallback(() => {
 		dispatch(addToCart({product, quantity: 1}))
-	}, [ product])
+	}, [product, dispatch])
 
 	return (
 		<article className='overflow-hidden rounded-md border bg-card text-card-foreground shadow-xs'>
